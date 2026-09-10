@@ -1,0 +1,29 @@
+{
+  "name": "@effective-charity/data-foundation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Philanthropy Data Foundation: ingestion, entity resolution and knowledge graph for the Effective Charity network.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "ingest:companies-house": "ts-node src/ingest/companiesHouse.ts",
+    "ingest:charity-commission": "ts-node src/ingest/charityCommission.ts",
+    "resolve:entities": "ts-node src/entity-resolution/run.ts",
+    "graph:build": "ts-node src/graph/build.ts",
+    "pipeline:all": "npm run ingest:charity-commission && npm run ingest:companies-house && npm run resolve:entities && npm run graph:build"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "dotenv": "^16.4.5",
+    "node-fetch": "^2.7.0",
+    "unzipper": "^0.12.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.7.4",
+    "@types/node-fetch": "^2.6.11",
+    "@types/unzipper": "^0.10.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2"
+  }
+}

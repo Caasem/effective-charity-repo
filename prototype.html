@@ -1,0 +1,2207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Effective Charity — A Network for Giving</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1e40af;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e3a8a;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --neutral-50: #f9fafb;
+            --neutral-100: #f3f4f6;
+            --neutral-200: #e5e7eb;
+            --neutral-300: #d1d5db;
+            --neutral-400: #9ca3af;
+            --neutral-600: #4b5563;
+            --neutral-700: #374151;
+            --neutral-900: #111827;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--neutral-50);
+            color: var(--neutral-900);
+            line-height: 1.6;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: white;
+            border-bottom: 1px solid var(--neutral-200);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+        }
+
+        nav {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+            flex: 1;
+            margin-left: 40px;
+        }
+
+        nav button {
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--neutral-600);
+            transition: color 0.2s;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        nav button:hover, nav button.active {
+            color: var(--primary);
+            background: rgba(30, 64, 175, 0.08);
+        }
+
+        .role-switcher {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border: 1px solid var(--neutral-200);
+            border-radius: 8px;
+            padding: 4px;
+            background: var(--neutral-50);
+        }
+
+        .role-btn {
+            padding: 6px 12px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            background: none;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--neutral-600);
+            transition: all 0.2s;
+        }
+
+        .role-btn.active {
+            background: white;
+            color: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .demo-badge {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--danger);
+            background: #fee2e2;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        /* Pages */
+        .page {
+            display: none;
+            min-height: calc(100vh - 100px);
+            padding: 40px 0;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 80px 40px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 18px;
+            opacity: 0.95;
+            margin-bottom: 32px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--neutral-100);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 60px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--neutral-200);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--neutral-600);
+            font-weight: 500;
+        }
+
+        /* Section Header */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .section-header h2 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .grid-2col {
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        }
+
+        /* Card */
+        .card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--neutral-200);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+            transform: translateY(-4px);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+        }
+
+        .card-content {
+            padding: 24px;
+        }
+
+        .card-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .badge-urgent {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-high {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-medium {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--neutral-900);
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--neutral-100);
+            font-size: 13px;
+            color: var(--neutral-600);
+        }
+
+        .card-funding {
+            margin-bottom: 16px;
+        }
+
+        .funding-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: var(--neutral-600);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--neutral-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s;
+        }
+
+        /* Map */
+        .map-container {
+            width: 100%;
+            height: 600px;
+            border-radius: 12px;
+            background: white;
+            border: 1px solid var(--neutral-200);
+            overflow: hidden;
+            margin-bottom: 40px;
+        }
+
+        .map-canvas {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #f0f4f8;
+        }
+
+        .map-marker {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            transform: translate(-50%, -50%);
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .map-marker:hover {
+            transform: translate(-50%, -60%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .map-marker.critical {
+            background: #ef4444;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .map-marker.high {
+            background: #f59e0b;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .map-marker.medium {
+            background: #3b82f6;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .map-marker.low {
+            background: #10b981;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .map-popup {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            min-width: 280px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            z-index: 100;
+            transform: translate(-50%, -100%);
+            top: -10px;
+            left: 50%;
+        }
+
+        .map-popup-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--neutral-900);
+        }
+
+        .map-popup-meta {
+            font-size: 13px;
+            color: var(--neutral-600);
+            margin-bottom: 12px;
+        }
+
+        .map-popup-btn {
+            width: 100%;
+            padding: 8px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        /* Detail View */
+        .detail-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+        }
+
+        .detail-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .detail-image {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 120px;
+        }
+
+        .detail-info h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .detail-org {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--neutral-200);
+        }
+
+        .org-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .org-info h3 {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .org-info p {
+            font-size: 13px;
+            color: var(--neutral-600);
+        }
+
+        .detail-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .detail-stat {
+            background: var(--neutral-50);
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .detail-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .detail-stat-label {
+            font-size: 12px;
+            color: var(--neutral-600);
+            font-weight: 500;
+        }
+
+        .detail-cta {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .detail-cta:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--neutral-200);
+            margin-bottom: 32px;
+        }
+
+        .tab-btn {
+            padding: 16px 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--neutral-600);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--neutral-200);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 32px;
+            border-bottom: 1px solid var(--neutral-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--neutral-400);
+        }
+
+        .modal-body {
+            padding: 32px;
+        }
+
+        .modal-footer {
+            padding: 24px 32px;
+            border-top: 1px solid var(--neutral-200);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* Donation Flow */
+        .giving-types {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .giving-type-btn {
+            padding: 16px;
+            border: 2px solid var(--neutral-200);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .giving-type-btn:hover {
+            border-color: var(--primary);
+        }
+
+        .giving-type-btn.selected {
+            border-color: var(--primary);
+            background: rgba(30, 64, 175, 0.08);
+        }
+
+        .giving-type-btn strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .giving-type-btn small {
+            font-size: 12px;
+            color: var(--neutral-600);
+        }
+
+        .amount-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .amount-btn {
+            padding: 12px;
+            border: 1px solid var(--neutral-200);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .amount-btn:hover,
+        .amount-btn.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .summary {
+            background: var(--neutral-50);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .summary-row.total {
+            font-weight: 700;
+            font-size: 18px;
+            border-top: 1px solid var(--neutral-200);
+            padding-top: 12px;
+            margin-top: 12px;
+        }
+
+        /* Success State */
+        .success-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .success-state h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .success-state p {
+            color: var(--neutral-600);
+            margin-bottom: 24px;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--neutral-50);
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--neutral-600);
+            border-bottom: 1px solid var(--neutral-200);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--neutral-200);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* List */
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border: 1px solid var(--neutral-200);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .list-item-content h4 {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .list-item-content p {
+            font-size: 13px;
+            color: var(--neutral-600);
+        }
+
+        .list-item-action {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .detail-header {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            nav {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+                margin-left: 0;
+            }
+
+            .giving-types {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .amount-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .header-inner {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+        }
+
+        /* Utility */
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-32 {
+            margin-bottom: 32px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .text-muted {
+            color: var(--neutral-600);
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-inner">
+                <div class="logo">
+                    <span class="logo-icon">🌍</span>
+                    <span>Effective Charity</span>
+                    <span class="demo-badge">Demo</span>
+                </div>
+                <nav id="nav-menu">
+                    <button onclick="navigate('landing')" class="nav-btn active" data-page="landing">Home</button>
+                    <button onclick="navigate('overview')" class="nav-btn" data-page="overview">Overview</button>
+                    <button onclick="navigate('map')" class="nav-btn" data-page="map">Map</button>
+                    <button onclick="navigate('initiatives')" class="nav-btn" data-page="initiatives">Initiatives</button>
+                    <button onclick="navigate('charities')" class="nav-btn" data-page="charities">Charities</button>
+                    <button onclick="navigate('needs')" class="nav-btn" data-page="needs">Needs</button>
+                    <button id="org-nav" onclick="navigate('org-dashboard')" class="nav-btn" style="display:none;" data-page="org-dashboard">My Org</button>
+                </nav>
+                <div class="role-switcher">
+                    <button class="role-btn active" onclick="switchRole('donor')">Donor</button>
+                    <button class="role-btn" onclick="switchRole('charity')">Charity</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <!-- Landing Page -->
+            <div class="page active" id="page-landing">
+                <div class="hero">
+                    <h1>Give better.<br>Work together.<br>Create greater impact.</h1>
+                    <p>A shared network connecting donors, charities, businesses, volunteers and resources to genuine needs.</p>
+                    <div class="hero-cta">
+                        <button class="btn btn-primary" onclick="navigate('overview')">Explore the Network</button>
+                        <button class="btn btn-secondary" onclick="navigate('charities')">I'm a Charity</button>
+                    </div>
+                </div>
+
+                <div class="text-center mb-32">
+                    <h2 style="font-size: 24px; margin-bottom: 32px;">How the Network Works</h2>
+                    <div class="grid" style="max-width: 800px; margin: 0 auto;">
+                        <div class="card">
+                            <div style="padding: 24px; text-align: center;">
+                                <div style="font-size: 40px; margin-bottom: 12px;">💰</div>
+                                <h3 style="font-weight: 600; margin-bottom: 8px;">Give</h3>
+                                <p style="font-size: 13px; color: var(--neutral-600);">Donate to verified initiatives with confidence</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div style="padding: 24px; text-align: center;">
+                                <div style="font-size: 40px; margin-bottom: 12px;">🤝</div>
+                                <h3 style="font-weight: 600; margin-bottom: 8px;">Connect</h3>
+                                <p style="font-size: 13px; color: var(--neutral-600);">Find partners and reduce duplication</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div style="padding: 24px; text-align: center;">
+                                <div style="font-size: 40px; margin-bottom: 12px;">📊</div>
+                                <h3 style="font-weight: 600; margin-bottom: 8px;">Track</h3>
+                                <p style="font-size: 13px; color: var(--neutral-600);">See your impact in real time</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overview Dashboard -->
+            <div class="page" id="page-overview">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+                    <h1 style="font-size: 32px;">Network Overview</h1>
+                    <button class="btn btn-primary" onclick="resetDemoData()">Reset Demo Data</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">£<span id="stat-committed">2.84M</span></div>
+                        <div class="stat-label">Currently Committed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span id="stat-initiatives">126</span></div>
+                        <div class="stat-label">Active Initiatives</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span id="stat-orgs">48</span></div>
+                        <div class="stat-label">Participating Orgs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span id="stat-needs">312</span></div>
+                        <div class="stat-label">Open Needs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span id="stat-volunteers">1,840</span></div>
+                        <div class="stat-label">Active Volunteers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span id="stat-businesses">27</span></div>
+                        <div class="stat-label">Business Partners</div>
+                    </div>
+                </div>
+
+                <h2 style="font-size: 24px; margin-bottom: 24px;">Priority Needs</h2>
+                <div class="grid">
+                    <div class="card" onclick="navigate('initiatives'); setTimeout(() => viewInitiative(1), 100)">
+                        <div class="card-image">🏥</div>
+                        <div class="card-content">
+                            <div class="card-badge badge-urgent">🔴 Critical</div>
+                            <div class="card-title">Sudan Medical Response</div>
+                            <div class="card-meta">
+                                <span>Port Sudan</span>
+                                <span>Healthcare</span>
+                            </div>
+                            <div class="card-funding">
+                                <div class="funding-bar">
+                                    <span>£53,600</span>
+                                    <span>71%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 71%"></div>
+                                </div>
+                            </div>
+                            <small class="text-muted">4 organisations involved</small>
+                        </div>
+                    </div>
+
+                    <div class="card" onclick="navigate('initiatives'); setTimeout(() => viewInitiative(2), 100)">
+                        <div class="card-image">🍱</div>
+                        <div class="card-content">
+                            <div class="card-badge badge-urgent">🔴 Critical</div>
+                            <div class="card-title">Gaza Family Food</div>
+                            <div class="card-meta">
+                                <span>Gaza</span>
+                                <span>Food Security</span>
+                            </div>
+                            <div class="card-funding">
+                                <div class="funding-bar">
+                                    <span>£41,250</span>
+                                    <span>65%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 65%"></div>
+                                </div>
+                            </div>
+                            <small class="text-muted">6 organisations involved</small>
+                        </div>
+                    </div>
+
+                    <div class="card" onclick="navigate('initiatives'); setTimeout(() => viewInitiative(3), 100)">
+                        <div class="card-image">🏘️</div>
+                        <div class="card-content">
+                            <div class="card-badge badge-high">🟠 High</div>
+                            <div class="card-title">Birmingham Household Support</div>
+                            <div class="card-meta">
+                                <span>Birmingham</span>
+                                <span>Local Poverty</span>
+                            </div>
+                            <div class="card-funding">
+                                <div class="funding-bar">
+                                    <span>£7,520</span>
+                                    <span>82%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 82%"></div>
+                                </div>
+                            </div>
+                            <small class="text-muted">3 organisations involved</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Page -->
+            <div class="page" id="page-map">
+                <div style="margin-bottom: 24px;">
+                    <h1 style="font-size: 32px; margin-bottom: 24px;">Network Map</h1>
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                        <select id="map-filter-need" onchange="updateMapFilter()" style="padding: 8px 16px; border: 1px solid var(--neutral-200); border-radius: 8px;">
+                            <option value="">All Needs</option>
+                            <option value="food">Food</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="shelter">Shelter</option>
+                            <option value="water">Water</option>
+                        </select>
+                        <select id="map-filter-region" onchange="updateMapFilter()" style="padding: 8px 16px; border: 1px solid var(--neutral-200); border-radius: 8px;">
+                            <option value="">All Regions</option>
+                            <option value="Africa">Africa</option>
+                            <option value="Middle East">Middle East</option>
+                            <option value="Asia">Asia</option>
+                            <option value="UK">UK</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="map-container">
+                    <svg class="map-canvas" id="map-svg">
+                        <defs>
+                            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e5e7eb" stroke-width="0.5"/>
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#grid)"/>
+                    </svg>
+                    <div id="map-markers-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+
+            <!-- Initiatives -->
+            <div class="page" id="page-initiatives">
+                <div class="section-header">
+                    <h1 style="font-size: 32px;">Initiatives</h1>
+                </div>
+                <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                    <input type="text" id="search-initiatives" placeholder="Search initiatives..." style="flex: 1; padding: 12px 16px; border: 1px solid var(--neutral-200); border-radius: 8px;">
+                    <select id="filter-category" onchange="filterInitiatives()" style="padding: 12px 16px; border: 1px solid var(--neutral-200); border-radius: 8px;">
+                        <option value="">All Categories</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Food">Food</option>
+                        <option value="Shelter">Shelter</option>
+                        <option value="Education">Education</option>
+                    </select>
+                </div>
+                <div class="grid" id="initiatives-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Initiative Detail -->
+            <div class="page" id="page-initiative-detail">
+                <button onclick="navigate('initiatives')" style="margin-bottom: 24px; padding: 8px 16px; border: 1px solid var(--neutral-200); background: white; border-radius: 6px; cursor: pointer;">← Back</button>
+
+                <div id="detail-container">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Charities -->
+            <div class="page" id="page-charities">
+                <div class="section-header">
+                    <h1 style="font-size: 32px;">Participating Organisations</h1>
+                </div>
+                <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                    <input type="text" id="search-charities" placeholder="Search organisations..." style="flex: 1; padding: 12px 16px; border: 1px solid var(--neutral-200); border-radius: 8px;">
+                </div>
+                <div class="grid grid-2col" id="charities-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Charity Detail -->
+            <div class="page" id="page-charity-detail">
+                <button onclick="navigate('charities')" style="margin-bottom: 24px; padding: 8px 16px; border: 1px solid var(--neutral-200); background: white; border-radius: 6px; cursor: pointer;">← Back</button>
+
+                <div id="charity-detail-container">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Needs -->
+            <div class="page" id="page-needs">
+                <h1 style="font-size: 32px; margin-bottom: 32px;">Open Needs</h1>
+                <div class="grid" id="needs-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Organisation Dashboard -->
+            <div class="page" id="page-org-dashboard">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+                    <div>
+                        <h1 style="font-size: 32px;">Rahma Relief International</h1>
+                        <p style="color: var(--neutral-600);">International humanitarian response</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal('create-initiative')">+ Create Initiative</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">£<span id="org-stat-raised">482K</span></div>
+                        <div class="stat-label">Funds Raised</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span id="org-stat-active">12</span></div>
+                        <div class="stat-label">Active Initiatives</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span id="org-stat-completed">34</span></div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span id="org-stat-partners">27</span></div>
+                        <div class="stat-label">Resource Partners</div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h2 style="font-size: 20px; margin-bottom: 24px;">Current Initiatives</h2>
+                    <div id="org-initiatives-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h2 style="font-size: 20px; margin-bottom: 24px;">Open Needs</h2>
+                    <div style="display: grid; gap: 16px;" id="org-needs-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h2 style="font-size: 20px; margin-bottom: 24px;">Coordination Opportunities</h2>
+                    <div id="org-coordination-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Giving -->
+            <div class="page" id="page-my-giving">
+                <h1 style="font-size: 32px; margin-bottom: 32px;">My Giving</h1>
+
+                <div class="stats-grid" style="margin-bottom: 40px;">
+                    <div class="stat-card">
+                        <div class="stat-value">£<span id="giving-total">1,284</span></div>
+                        <div class="stat-label">This Year</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span id="giving-count">17</span></div>
+                        <div class="stat-label">Initiatives</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><span id="giving-countries">6</span></div>
+                        <div class="stat-label">Countries</div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h2 style="font-size: 20px; margin-bottom: 24px;">Recent Donations</h2>
+                    <div class="table-container">
+                        <table id="giving-history-table">
+                            <thead>
+                                <tr>
+                                    <th>Initiative</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="giving-history">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Donation Modal -->
+    <div class="modal" id="donation-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Make a Donation</h2>
+                <button class="modal-close" onclick="closeModal('donation')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="donation-step-1">
+                    <div class="form-group">
+                        <label>What type of giving?</label>
+                        <div class="giving-types">
+                            <div class="giving-type-btn selected" onclick="selectGivingType('sadaqah', this)">
+                                <strong>Sadaqah</strong>
+                                <small>Voluntary</small>
+                            </div>
+                            <div class="giving-type-btn" onclick="selectGivingType('zakat', this)">
+                                <strong>Zakat</strong>
+                                <small>Annual alms</small>
+                            </div>
+                            <div class="giving-type-btn" onclick="selectGivingType('waqf', this)">
+                                <strong>Waqf</strong>
+                                <small>Endowment</small>
+                            </div>
+                            <div class="giving-type-btn" onclick="selectGivingType('recurring', this)">
+                                <strong>Recurring</strong>
+                                <small>Monthly</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Quick Select</label>
+                        <div class="amount-buttons">
+                            <button class="amount-btn" onclick="setDonationAmount(25, this)">£25</button>
+                            <button class="amount-btn" onclick="setDonationAmount(50, this)">£50</button>
+                            <button class="amount-btn" onclick="setDonationAmount(100, this)">£100</button>
+                            <button class="amount-btn" onclick="setDonationAmount(250, this)">£250</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Custom Amount (£)</label>
+                        <input type="number" id="custom-amount" placeholder="Enter amount" min="1" oninput="updateDonationSummary()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="donor-email" value="ahmed.said@example.com">
+                    </div>
+
+                    <div class="summary">
+                        <div class="summary-row">
+                            <span>Donation</span>
+                            <span id="summary-donation">£0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Platform Fee</span>
+                            <span id="summary-fee">£0.00</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span id="summary-total">£0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="donation-step-2" style="display:none;">
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">💳</div>
+                        <h3 style="font-size: 18px; margin-bottom: 8px;">Demo Payment</h3>
+                        <p style="color: var(--neutral-600); font-size: 14px;">This is a simulated transaction for demonstration purposes.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Initiative</label>
+                        <input type="text" id="payment-initiative" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Amount</label>
+                        <input type="text" id="payment-amount" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Giving Type</label>
+                        <input type="text" id="payment-type" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Card Number</label>
+                        <input type="text" value="**** **** **** 4242" disabled style="background: var(--neutral-100);">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                        <div class="form-group">
+                            <label>Expiry</label>
+                            <input type="text" value="12/25" disabled style="background: var(--neutral-100);">
+                        </div>
+                        <div class="form-group">
+                            <label>CVC</label>
+                            <input type="text" value="•••" disabled style="background: var(--neutral-100);">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="donation-step-3" style="display:none;">
+                    <div class="success-state">
+                        <div class="success-icon">✓</div>
+                        <h2>Payment Successful</h2>
+                        <p>Your donation has been received</p>
+                        <div style="background: var(--neutral-50); padding: 24px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px;">
+                                <span>Amount</span>
+                                <strong id="success-amount">£0</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px;">
+                                <span>Initiative</span>
+                                <strong id="success-initiative">—</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px;">
+                                <span>Reference</span>
+                                <strong id="success-reference">—</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                                <span>Type</span>
+                                <strong id="success-type">—</strong>
+                            </div>
+                        </div>
+                        <p style="font-size: 12px; color: var(--danger); background: #fee2e2; padding: 12px; border-radius: 6px;">⚠️ No real payment has been processed. This is a prototype demonstration.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button onclick="closeModal('donation')" class="btn btn-secondary">Cancel</button>
+                <button id="donation-next-btn" onclick="nextDonationStep()" class="btn btn-primary">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Initiative Modal -->
+    <div class="modal" id="create-initiative-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Initiative</h2>
+                <button class="modal-close" onclick="closeModal('create-initiative')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Initiative Name</label>
+                    <input type="text" placeholder="e.g., Emergency Medical Response">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea placeholder="Describe the initiative and its goals"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" placeholder="e.g., Port Sudan">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select>
+                        <option>Healthcare</option>
+                        <option>Food</option>
+                        <option>Shelter</option>
+                        <option>Education</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Funding Required (£)</label>
+                    <input type="number" placeholder="50000">
+                </div>
+                <div class="form-group">
+                    <label>Urgency</label>
+                    <select>
+                        <option>Critical</option>
+                        <option>High</option>
+                        <option>Medium</option>
+                        <option>Low</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal('create-initiative')" class="btn btn-secondary">Cancel</button>
+                <button onclick="saveInitiative()" class="btn btn-primary">Create Initiative</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        const state = {
+            currentPage: 'landing',
+            currentRole: 'donor',
+            currentInitiative: null,
+            currentCharity: null,
+            donationStep: 1,
+            donationData: {
+                type: 'sadaqah',
+                amount: 0,
+                email: '',
+                initiativeId: null,
+                initiativeName: null
+            },
+            donations: [
+                { id: 1, initiative: 'Sudan Medical Response', type: 'Sadaqah', amount: 25, date: '10 Sep' },
+                { id: 2, initiative: 'Gaza Family Food', type: 'Sadaqah', amount: 20, date: '06 Sep' },
+                { id: 3, initiative: 'Birmingham Household', type: 'Zakat', amount: 100, date: '30 Aug' },
+                { id: 4, initiative: 'Water Project - Somalia', type: 'Sadaqah', amount: 50, date: '22 Aug' },
+                { id: 5, initiative: 'Education Initiative - Pakistan', type: 'Sadaqah', amount: 1089, date: '10 Aug' }
+            ],
+            stats: {
+                committed: '2.84M',
+                initiatives: 126,
+                orgs: 48,
+                needs: 312,
+                volunteers: 1840,
+                businesses: 27
+            }
+        };
+
+        const initiatives = [
+            {
+                id: 1,
+                name: 'Sudan Medical Response',
+                emoji: '🏥',
+                location: 'Port Sudan',
+                region: 'Africa',
+                category: 'Healthcare',
+                need: 'Healthcare',
+                urgency: 'critical',
+                fundingRequired: 131400,
+                fundingRaised: 93100,
+                donorCount: 2340,
+                description: 'Provide emergency medicines, mobile medical services and essential supplies to displaced families in Port Sudan and surrounding communities.',
+                organisations: [
+                    { id: 1, name: 'Rahma Relief International', logo: 'RR', verified: true },
+                    { id: 2, name: 'Crescent Humanitarian Aid', logo: 'CH', verified: true }
+                ],
+                needs: [
+                    { name: 'Medical Supplies', required: 200, fulfilled: 142, unit: 'units' },
+                    { name: 'Refrigerated Vehicles', required: 2, fulfilled: 1, unit: 'vehicles' },
+                    { name: 'Medical Staff', required: 8, fulfilled: 6, unit: 'people' }
+                ],
+                evidence: ['📋', '📸', '📊', '✓', '🎥']
+            },
+            {
+                id: 2,
+                name: 'Gaza Family Food Programme',
+                emoji: '🍱',
+                location: 'Gaza',
+                region: 'Middle East',
+                category: 'Food',
+                need: 'food',
+                urgency: 'critical',
+                fundingRequired: 63500,
+                fundingRaised: 41250,
+                donorCount: 1840,
+                description: 'Distribute food packages to vulnerable families in Gaza, ensuring children receive adequate nutrition and support.',
+                organisations: [
+                    { id: 3, name: 'Al Noor Relief', logo: 'AN', verified: true },
+                    { id: 4, name: 'Islamic Relief', logo: 'IR', verified: true }
+                ],
+                needs: [
+                    { name: 'Food Packages', required: 2000, fulfilled: 1300, unit: 'packages' },
+                    { name: 'Cooking Equipment', required: 50, fulfilled: 40, unit: 'units' },
+                    { name: 'Volunteers', required: 30, fulfilled: 18, unit: 'people' }
+                ],
+                evidence: ['📋', '📸', '🎥']
+            },
+            {
+                id: 3,
+                name: 'Birmingham Household Support',
+                emoji: '🏘️',
+                location: 'Birmingham',
+                region: 'UK',
+                category: 'Local Poverty',
+                need: 'local',
+                urgency: 'high',
+                fundingRequired: 9200,
+                fundingRaised: 7520,
+                donorCount: 342,
+                description: 'Support vulnerable households in Birmingham with emergency funds, food, and utility assistance.',
+                organisations: [
+                    { id: 5, name: 'Birmingham Muslim Aid', logo: 'BMA', verified: true }
+                ],
+                needs: [
+                    { name: 'Emergency Funds', required: 50, fulfilled: 45, unit: 'families' },
+                    { name: 'Food Support', required: 100, fulfilled: 82, unit: 'packages' },
+                    { name: 'Utility Assistance', required: 30, fulfilled: 20, unit: 'homes' }
+                ],
+                evidence: ['📋', '📸']
+            },
+            {
+                id: 4,
+                name: 'Water & Sanitation - Somalia',
+                emoji: '💧',
+                location: 'Mogadishu',
+                region: 'Africa',
+                category: 'Water',
+                need: 'water',
+                urgency: 'high',
+                fundingRequired: 85000,
+                fundingRaised: 51000,
+                donorCount: 1125,
+                description: 'Build wells and water infrastructure in Somalia to provide clean drinking water to communities.',
+                organisations: [
+                    { id: 6, name: 'Water & Dignity Foundation', logo: 'WD', verified: true }
+                ],
+                needs: [
+                    { name: 'Wells', required: 10, fulfilled: 6, unit: 'wells' },
+                    { name: 'Purification Units', required: 50, fulfilled: 30, unit: 'units' },
+                    { name: 'Staff Training', required: 5, fulfilled: 3, unit: 'sessions' }
+                ],
+                evidence: ['📋', '📸', '📊']
+            },
+            {
+                id: 5,
+                name: 'Education Initiative - Pakistan',
+                emoji: '📚',
+                location: 'Lahore',
+                region: 'Asia',
+                category: 'Education',
+                need: 'education',
+                urgency: 'medium',
+                fundingRequired: 45000,
+                fundingRaised: 28500,
+                donorCount: 567,
+                description: 'Provide educational support and resources to underprivileged students in Pakistan.',
+                organisations: [
+                    { id: 7, name: 'Amanah Education Foundation', logo: 'AE', verified: true }
+                ],
+                needs: [
+                    { name: 'School Supplies', required: 500, fulfilled: 300, unit: 'sets' },
+                    { name: 'Scholarships', required: 50, fulfilled: 28, unit: 'students' },
+                    { name: 'Teachers', required: 10, fulfilled: 6, unit: 'people' }
+                ],
+                evidence: ['📋', '📊']
+            }
+        ];
+
+        const charities = [
+            {
+                id: 1,
+                name: 'Rahma Relief International',
+                logo: 'RR',
+                type: 'International NGO',
+                description: 'International humanitarian response organisation',
+                verified: true,
+                rating: 4.8,
+                ratingCount: 342,
+                countries: ['Sudan', 'Syria', 'Palestine', 'Yemen'],
+                causes: ['Emergency Response', 'Healthcare', 'Food Security'],
+                activinitiatives: 12,
+                completedInitiatives: 34,
+                totalRaised: 4820000,
+                transparency: 86
+            },
+            {
+                id: 2,
+                name: 'Islamic Relief',
+                logo: 'IR',
+                type: 'Charity',
+                description: 'Global humanitarian relief charity',
+                verified: true,
+                rating: 4.7,
+                ratingCount: 512,
+                countries: ['Pakistan', 'Bangladesh', 'Syria', 'Somalia'],
+                causes: ['Food', 'Healthcare', 'Education', 'Emergency'],
+                activeInitiatives: 18,
+                completedInitiatives: 56,
+                totalRaised: 6250000,
+                transparency: 92
+            },
+            {
+                id: 3,
+                name: 'Al Noor Relief',
+                logo: 'AN',
+                type: 'Relief Organization',
+                description: 'Humanitarian relief and development',
+                verified: true,
+                rating: 4.6,
+                ratingCount: 234,
+                countries: ['Gaza', 'Lebanon', 'Jordan'],
+                causes: ['Emergency Response', 'Food', 'Shelter'],
+                activeInitiatives: 8,
+                completedInitiatives: 22,
+                totalRaised: 2120000,
+                transparency: 78
+            },
+            {
+                id: 4,
+                name: 'Birmingham Muslim Aid',
+                logo: 'BMA',
+                type: 'Community Organization',
+                description: 'Local and international assistance',
+                verified: true,
+                rating: 4.5,
+                ratingCount: 156,
+                countries: ['UK', 'Pakistan'],
+                causes: ['Poverty', 'Education', 'Health'],
+                activeInitiatives: 5,
+                completedInitiatives: 12,
+                totalRaised: 850000,
+                transparency: 85
+            }
+        ];
+
+        // Navigation
+        function navigate(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            state.currentPage = page;
+
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+
+            // Populate content when navigating
+            if (page === 'initiatives') {
+                populateInitiatives();
+            } else if (page === 'charities') {
+                populateCharities();
+            } else if (page === 'needs') {
+                populateNeeds();
+            } else if (page === 'my-giving') {
+                populateGivingHistory();
+            }
+
+            window.scrollTo(0, 0);
+        }
+
+        // Role switching
+        function switchRole(role) {
+            state.currentRole = role;
+            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (role === 'charity') {
+                document.getElementById('org-nav').style.display = 'block';
+                navigate('org-dashboard');
+            } else {
+                document.getElementById('org-nav').style.display = 'none';
+                navigate('overview');
+            }
+        }
+
+        // Initiatives
+        function populateInitiatives() {
+            const grid = document.getElementById('initiatives-grid');
+            grid.innerHTML = initiatives.map(init => `
+                <div class="card" onclick="viewInitiative(${init.id})">
+                    <div class="card-image">${init.emoji}</div>
+                    <div class="card-content">
+                        <div class="card-badge badge-${init.urgency.replace('medium', 'medium').replace('high', 'high').replace('critical', 'urgent')}">
+                            ${init.urgency === 'critical' ? '🔴' : init.urgency === 'high' ? '🟠' : '🟡'} ${init.urgency.toUpperCase()}
+                        </div>
+                        <div class="card-title">${init.name}</div>
+                        <div class="card-meta">
+                            <span>📍 ${init.location}</span>
+                            <span>${init.category}</span>
+                        </div>
+                        <div class="card-funding">
+                            <div class="funding-bar">
+                                <span>£${init.fundingRaised.toLocaleString()}</span>
+                                <span>${Math.round(init.fundingRaised / init.fundingRequired * 100)}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${init.fundingRaised / init.fundingRequired * 100}%"></div>
+                            </div>
+                        </div>
+                        <small class="text-muted">${init.donorCount.toLocaleString()} donors</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewInitiative(id) {
+            const init = initiatives.find(i => i.id === id);
+            state.currentInitiative = init;
+
+            const container = document.getElementById('detail-container');
+            const fundingPercent = Math.round(init.fundingRaised / init.fundingRequired * 100);
+
+            container.innerHTML = `
+                <div class="detail-section">
+                    <div class="detail-header">
+                        <div>
+                            <div class="detail-image">${init.emoji}</div>
+                        </div>
+                        <div>
+                            <div class="detail-org">
+                                <div class="org-logo">${init.organisations[0].logo}</div>
+                                <div class="org-info">
+                                    <h3>${init.organisations[0].name}</h3>
+                                    <p>✓ Verified Organisation</p>
+                                </div>
+                            </div>
+                            <h1>${init.name}</h1>
+                            <div class="detail-stats">
+                                <div class="detail-stat">
+                                    <div class="detail-stat-value">£${init.fundingRaised.toLocaleString()}</div>
+                                    <div class="detail-stat-label">Raised</div>
+                                </div>
+                                <div class="detail-stat">
+                                    <div class="detail-stat-value">£${init.fundingRequired.toLocaleString()}</div>
+                                    <div class="detail-stat-label">Target</div>
+                                </div>
+                            </div>
+                            <button class="detail-cta" onclick="openDonationModal(${id})">Donate Now</button>
+                        </div>
+                    </div>
+                    <p style="color: var(--neutral-700); line-height: 1.8; margin-bottom: 24px;">${init.description}</p>
+
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab(this, 'needs')">What's Needed</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'organisations')">Organisations</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'accountability')">Accountability</button>
+                    </div>
+
+                    <div class="tab-content active" id="tab-needs">
+                        ${init.needs.map(need => `
+                            <div class="list-item">
+                                <div class="list-item-content">
+                                    <h4>${need.name}</h4>
+                                    <p>${need.fulfilled} of ${need.required} ${need.unit}</p>
+                                    <div class="progress-bar" style="margin-top: 8px;">
+                                        <div class="progress-fill" style="width: ${need.fulfilled / need.required * 100}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="tab-content" id="tab-organisations">
+                        ${init.organisations.map(org => `
+                            <div class="list-item">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div class="org-logo">${org.logo}</div>
+                                    <div>
+                                        <strong>${org.name}</strong>
+                                        <p style="font-size: 12px; color: var(--neutral-600);">✓ Verified</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="tab-content" id="tab-accountability">
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+                            ${init.evidence.map((item, i) => `
+                                <div style="text-align: center; padding: 16px; background: var(--neutral-50); border-radius: 8px;">
+                                    <div style="font-size: 32px; margin-bottom: 8px;">${item}</div>
+                                    <small class="text-muted">${['Reports', 'Photos', 'Videos', 'Verified', 'Updates'][i]}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="margin-top: 24px; padding: 16px; background: var(--neutral-50); border-radius: 8px;">
+                            <strong style="display: block; margin-bottom: 8px;">Verification Status</strong>
+                            <p style="font-size: 13px; color: var(--neutral-600);">✓ Organisation verified • ✓ Initiative documented • ✓ Financial reports submitted</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            navigate('initiative-detail');
+        }
+
+        function switchTab(btn, tabName) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // Charities
+        function populateCharities() {
+            const grid = document.getElementById('charities-grid');
+            grid.innerHTML = charities.map(charity => `
+                <div class="card" onclick="viewCharity(${charity.id})">
+                    <div style="padding: 24px; text-align: center;">
+                        <div class="org-logo" style="width: 80px; height: 80px; margin: 0 auto 16px; font-size: 32px;">${charity.logo}</div>
+                        <h3 style="font-weight: 600; margin-bottom: 8px;">${charity.name}</h3>
+                        <p style="font-size: 13px; color: var(--neutral-600); margin-bottom: 12px;">${charity.type}</p>
+                        ${charity.verified ? '<p style="font-size: 12px; color: var(--success);">✓ Verified</p>' : ''}
+                        <div style="display: flex; justify-content: center; gap: 4px; margin-top: 12px;">
+                            ${'⭐'.repeat(Math.round(charity.rating))}
+                        </div>
+                        <p style="font-size: 12px; color: var(--neutral-600);">${charity.rating} (${charity.ratingCount} reviews)</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewCharity(id) {
+            const charity = charities.find(c => c.id === id);
+            const container = document.getElementById('charity-detail-container');
+
+            container.innerHTML = `
+                <div class="detail-section">
+                    <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 32px;">
+                        <div class="org-logo" style="width: 120px; height: 120px; font-size: 48px;">${charity.logo}</div>
+                        <div>
+                            <h1 style="font-size: 32px; margin-bottom: 8px;">${charity.name}</h1>
+                            <p style="color: var(--neutral-600); margin-bottom: 16px;">${charity.description}</p>
+                            <div style="display: flex; gap: 24px;">
+                                <div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${charity.activeInitiatives}</div>
+                                    <div style="font-size: 12px; color: var(--neutral-600);">Active Initiatives</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--success);">£${(charity.totalRaised / 1000000).toFixed(1)}M</div>
+                                    <div style="font-size: 12px; color: var(--neutral-600);">Total Raised</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 20px; font-weight: 700; color: var(--warning);">${charity.transparency}</div>
+                                    <div style="font-size: 12px; color: var(--neutral-600);">Transparency Score</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab(this, 'overview')">Overview</button>
+                        <button class="tab-btn" onclick="switchTab(this, 'impact')">Impact</button>
+                    </div>
+
+                    <div class="tab-content active" id="tab-overview">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
+                            <div>
+                                <h3 style="font-weight: 600; margin-bottom: 12px;">Operating Countries</h3>
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    ${charity.countries.map(c => `<span style="padding: 6px 12px; background: var(--neutral-100); border-radius: 6px; font-size: 12px;">📍 ${c}</span>`).join('')}
+                                </div>
+                            </div>
+                            <div>
+                                <h3 style="font-weight: 600; margin-bottom: 12px;">Focus Areas</h3>
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    ${charity.causes.map(c => `<span style="padding: 6px 12px; background: var(--primary); color: white; border-radius: 6px; font-size: 12px;">${c}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-impact">
+                        <div style="background: var(--neutral-50); padding: 24px; border-radius: 8px;">
+                            <strong>Transparency Profile</strong>
+                            <div style="margin-top: 16px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
+                                    <span>Organisation Verification</span>
+                                    <strong>20/20</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
+                                    <span>Financial Reporting</span>
+                                    <strong>18/20</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
+                                    <span>Project Reporting</span>
+                                    <strong>17/20</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
+                                    <span>Impact Evidence</span>
+                                    <strong>16/20</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; padding-top: 12px; border-top: 1px solid var(--neutral-200);">
+                                    <span><strong>Overall Score</strong></span>
+                                    <strong style="color: var(--primary);">${charity.transparency}/100</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            navigate('charity-detail');
+        }
+
+        // Needs
+        function populateNeeds() {
+            const grid = document.getElementById('needs-grid');
+            const needs = initiatives.flatMap((init, idx) =>
+                init.needs.map((need, nidx) => ({
+                    ...need,
+                    initiativeId: init.id,
+                    initiativeName: init.name,
+                    category: init.category,
+                    location: init.location
+                }))
+            );
+
+            grid.innerHTML = needs.map((need, i) => `
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <h4>${need.name}</h4>
+                        <p style="margin-bottom: 8px;">${need.initiativeName} • ${need.location}</p>
+                        <div style="display: flex; gap: 16px; font-size: 12px; color: var(--neutral-600);">
+                            <span>${need.fulfilled} of ${need.required} ${need.unit}</span>
+                            <span>${Math.round(need.fulfilled / need.required * 100)}% fulfilled</span>
+                        </div>
+                        <div class="progress-bar" style="margin-top: 8px;">
+                            <div class="progress-fill" style="width: ${need.fulfilled / need.required * 100}%"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="white-space: nowrap;">Help Fulfil</button>
+                </div>
+            `).join('');
+        }
+
+        // Donations
+        function openDonationModal(id) {
+            state.donationData.initiativeId = id;
+            const init = initiatives.find(i => i.id === id);
+            state.donationData.initiativeName = init.name;
+            state.donationStep = 1;
+
+            document.getElementById('donation-step-1').style.display = 'block';
+            document.getElementById('donation-step-2').style.display = 'none';
+            document.getElementById('donation-step-3').style.display = 'none';
+            document.getElementById('donation-next-btn').textContent = 'Continue';
+
+            openModal('donation');
+        }
+
+        function selectGivingType(type, el) {
+            state.donationData.type = type;
+            document.querySelectorAll('.giving-type-btn').forEach(b => b.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function setDonationAmount(amount, el) {
+            state.donationData.amount = amount;
+            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('custom-amount').value = '';
+            updateDonationSummary();
+        }
+
+        function updateDonationSummary() {
+            const custom = parseInt(document.getElementById('custom-amount').value) || 0;
+            const amount = state.donationData.amount || custom;
+            const fee = Math.max(0.5, amount * 0.015);
+
+            document.getElementById('summary-donation').textContent = '£' + amount.toFixed(2);
+            document.getElementById('summary-fee').textContent = '£' + fee.toFixed(2);
+            document.getElementById('summary-total').textContent = '£' + (amount + fee).toFixed(2);
+
+            if (custom) {
+                document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+                state.donationData.amount = 0;
+            }
+        }
+
+        function nextDonationStep() {
+            const finalAmount = state.donationData.amount || parseInt(document.getElementById('custom-amount').value);
+
+            if (state.donationStep === 1) {
+                if (!finalAmount || finalAmount < 1) {
+                    alert('Please enter a valid amount');
+                    return;
+                }
+                state.donationStep = 2;
+                document.getElementById('donation-step-1').style.display = 'none';
+                document.getElementById('donation-step-2').style.display = 'block';
+                document.getElementById('donation-next-btn').textContent = 'Complete Payment';
+
+                document.getElementById('payment-initiative').value = state.donationData.initiativeName;
+                document.getElementById('payment-amount').value = '£' + finalAmount;
+                document.getElementById('payment-type').value = state.donationData.type.charAt(0).toUpperCase() + state.donationData.type.slice(1);
+
+            } else if (state.donationStep === 2) {
+                state.donationStep = 3;
+                document.getElementById('donation-step-2').style.display = 'none';
+                document.getElementById('donation-step-3').style.display = 'block';
+                document.getElementById('donation-next-btn').textContent = 'Back to Initiatives';
+
+                // Add to donations
+                const ref = 'MPN-DEMO-' + Math.floor(Math.random() * 100000);
+                state.donations.unshift({
+                    id: state.donations.length + 1,
+                    initiative: state.donationData.initiativeName,
+                    type: state.donationData.type.charAt(0).toUpperCase() + state.donationData.type.slice(1),
+                    amount: finalAmount,
+                    date: new Date().toLocaleDateString('en-GB', {day: '2-digit', month: 'short'})
+                });
+
+                // Update stats
+                state.stats.committed = '2.84M+';
+
+                document.getElementById('success-amount').textContent = '£' + finalAmount;
+                document.getElementById('success-initiative').textContent = state.donationData.initiativeName;
+                document.getElementById('success-reference').textContent = ref;
+                document.getElementById('success-type').textContent = state.donationData.type;
+            } else {
+                closeModal('donation');
+                navigate('initiatives');
+            }
+        }
+
+        // Org Dashboard
+        function populateOrgDashboard() {
+            // Populate org initiatives
+            const orgInitList = document.getElementById('org-initiatives-list');
+            orgInitList.innerHTML = initiatives.slice(0, 3).map(init => `
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <h4>${init.name}</h4>
+                        <p style="margin-bottom: 8px; font-size: 12px; color: var(--neutral-600);">£${init.fundingRaised.toLocaleString()} of £${init.fundingRequired.toLocaleString()}</p>
+                        <div class="progress-bar" style="margin-top: 8px;">
+                            <div class="progress-fill" style="width: ${init.fundingRaised / init.fundingRequired * 100}%"></div>
+                        </div>
+                    </div>
+                    <span style="font-weight: 600;">${Math.round(init.fundingRaised / init.fundingRequired * 100)}%</span>
+                </div>
+            `).join('');
+
+            // Populate needs
+            const needsList = document.getElementById('org-needs-list');
+            needsList.innerHTML = initiatives[0].needs.map(need => `
+                <div class="list-item">
+                    <div class="list-item-content">
+                        <h4>${need.name}</h4>
+                        <p style="font-size: 12px; color: var(--neutral-600);">${need.required} needed • ${need.fulfilled} fulfilled</p>
+                    </div>
+                    <button class="btn btn-primary" style="font-size: 12px; white-space: nowrap;">Request Help</button>
+                </div>
+            `).join('');
+
+            // Coordination
+            const coordList = document.getElementById('org-coordination-list');
+            coordList.innerHTML = `
+                <div style="padding: 16px; background: #fef3c7; border-radius: 8px; border-left: 4px solid var(--warning);">
+                    <h4 style="font-weight: 600; margin-bottom: 12px;">Potential Overlap Detected</h4>
+                    <p style="font-size: 13px; color: var(--neutral-700); margin-bottom: 12px;">3 organisations are currently operating food distribution in the same region.</p>
+                    <button class="btn btn-primary" style="font-size: 12px;">Explore Collaboration</button>
+                </div>
+            `;
+        }
+
+        // My Giving
+        function populateGivingHistory() {
+            const tbody = document.getElementById('giving-history');
+            tbody.innerHTML = state.donations.map(don => `
+                <tr>
+                    <td><strong>${don.initiative}</strong></td>
+                    <td>${don.type}</td>
+                    <td style="color: var(--success); font-weight: 600;">£${don.amount}</td>
+                    <td>${don.date}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('giving-total').textContent = state.donations.reduce((sum, d) => sum + d.amount, 0).toLocaleString();
+            document.getElementById('giving-count').textContent = state.donations.length;
+        }
+
+        // Map
+        function initMap() {
+            const mapSvg = document.getElementById('map-svg');
+            const markersContainer = document.getElementById('map-markers-container');
+
+            const mapMarkers = [
+                { name: 'Sudan Medical Response', x: 55, y: 35, urgency: 'critical', initiative: 1 },
+                { name: 'Gaza Family Food', x: 58, y: 40, urgency: 'critical', initiative: 2 },
+                { name: 'Birmingham Support', x: 35, y: 30, urgency: 'high', initiative: 3 },
+                { name: 'Somalia Water', x: 70, y: 50, urgency: 'high', initiative: 4 },
+                { name: 'Pakistan Education', x: 75, y: 45, urgency: 'medium', initiative: 5 }
+            ];
+
+            markersContainer.innerHTML = mapMarkers.map(m => `
+                <div class="map-marker ${m.urgency}" style="left: ${m.x}%; top: ${m.y}%;" onclick="viewMapPopup(event, ${m.initiative})">
+                    ${m.urgency === 'critical' ? '!' : m.urgency === 'high' ? '!' : '●'}
+                </div>
+            `).join('');
+        }
+
+        function viewMapPopup(e, initiativeId) {
+            e.stopPropagation();
+            const init = initiatives.find(i => i.id === initiativeId);
+            alert(`${init.name}\n\n${init.location}\n£${init.fundingRequired - init.fundingRaised} funding gap\n${init.organisations.length} organisations involved\n\nClick 'Initiatives' to see full details.`);
+        }
+
+        function updateMapFilter() {
+            // In a real app, this would filter the map
+            console.log('Map filtered');
+        }
+
+        // Modals
+        function openModal(id) {
+            document.getElementById(id + '-modal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id + '-modal').classList.remove('active');
+        }
+
+        function saveInitiative() {
+            alert('Initiative created successfully!');
+            closeModal('create-initiative');
+        }
+
+        function filterInitiatives() {
+            // Implement filtering
+            populateInitiatives();
+        }
+
+        function resetDemoData() {
+            state.donations = [
+                { id: 1, initiative: 'Sudan Medical Response', type: 'Sadaqah', amount: 25, date: '10 Sep' },
+                { id: 2, initiative: 'Gaza Family Food', type: 'Sadaqah', amount: 20, date: '06 Sep' },
+                { id: 3, initiative: 'Birmingham Household', type: 'Zakat', amount: 100, date: '30 Aug' },
+                { id: 4, initiative: 'Water Project - Somalia', type: 'Sadaqah', amount: 50, date: '22 Aug' },
+                { id: 5, initiative: 'Education Initiative - Pakistan', type: 'Sadaqah', amount: 1089, date: '10 Aug' }
+            ];
+            state.stats.committed = '2.84M';
+            alert('Demo data reset to original state');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            populateInitiatives();
+            populateCharities();
+            populateOrgDashboard();
+            initMap();
+        });
+    </script>
+</body>
+</html>
