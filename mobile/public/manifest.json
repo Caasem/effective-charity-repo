@@ -1,0 +1,20 @@
+{
+  "name": "Effective Charity",
+  "short_name": "Effective Charity",
+  "description": "A trusted network for Muslim philanthropy.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0B0D",
+  "theme_color": "#00D68F",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/assets/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

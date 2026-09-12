@@ -4,8 +4,10 @@ Real data ingestion, entity resolution, and a knowledge graph — the
 intelligence layer behind Sprint 9 of the roadmap ("where is money needed,
 where are organisations duplicating effort").
 
-This is genuinely working code, verified end-to-end against real UK
-charity registration numbers. Nothing here is a mockup.
+The first milestone is a reproducible, auditable foundation for three UK
+pilot charities: Islamic Relief Worldwide, Muslim Aid, and Human Appeal.
+Identifier-only fixtures are used when live credentials or downloads are not
+available; no financial or impact facts are fabricated.
 
 ## What it does
 
@@ -15,11 +17,13 @@ Charity Commission ─┐
 Companies House ─────┘   (entity resolution)  (knowledge graph)
 ```
 
-1. **Ingest** (`src/ingest/`) pulls real organisation data from two UK
-   government sources.
-2. **Resolve** (`src/entity-resolution/`) fuzzy-matches organisation names
-   across sources so "Islamic Relief Worldwide" the charity and "Islamic
-   Relief Worldwide" the registered company become one entity.
+1. **Ingest** (`src/ingest/`) uses Charity Commission and Companies House
+   adapters, preserving raw snapshots, hashes, URLs, identifiers, and dates.
+   `officialSources.ts` optionally snapshots pilot websites and manually
+   configured annual-report URLs.
+2. **Resolve** (`src/entity-resolution/`) creates canonical records and
+   fact-level provenance. Muslim Aid identity candidates are stored as
+   unresolved relationships and are never silently merged.
 3. **Graph** (`src/graph/`) derives relationship edges — which
    organisations operate in the same place, share a cause classification,
    or are candidates for coordination (the literal "3 organisations are
@@ -33,10 +37,9 @@ cp .env.example .env
 npm run pipeline:all
 ```
 
-With no API keys configured at all, this still works end-to-end: it falls
-back to 5 real, verifiable UK Muslim charity registrations (Islamic Relief,
-Muslim Aid, Penny Appeal, Human Appeal, MATW) and correctly surfaces real
-coordination overlaps between them (e.g. all four active in Gaza).
+With no API keys configured, the pipeline uses deterministic pilot identifier
+fixtures for the three charities and two Muslim Aid-related Companies House
+identifiers. Live values must be collected through the configured adapters.
 
 ### Adding real data sources
 
@@ -55,6 +58,22 @@ copy the "download json" link for the `charity` table, put it in `.env` as
 data extract — 200k+ charities with income, spending, classification and
 trustee data. (The link is versioned and rotates, so re-copy it if a run
 reports a 404 — the ingester tells you exactly this.)
+
+## Source and identity guarantees
+
+Source types are `government_regulator_verified`,
+`organisation_reported`, `third_party_reported`, and `zakat_grid_derived`.
+Every stored snapshot includes source URL, record/document identifier,
+observed/retrieved dates, confidence at fact level, and a SHA-256 hash.
+`identity_candidates` explicitly retains unresolved relationships between
+Charity Commission 1000853, 1176462, Companies House CE012794, and historical
+Muslim Aid International company 06537070.
+
+For live annual reports, copy the exact official PDF URL into the matching
+environment variable and add it to the adapter target list. Credentials
+needed are `COMPANIES_HOUSE_API_KEY`; the Charity Commission extract URL is
+versioned and must be copied from its download page. Without those values,
+the pipeline remains deterministic but only contains identifier-level facts.
 
 ## Storage
 

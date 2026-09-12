@@ -38,6 +38,49 @@ CREATE TABLE IF NOT EXISTS source_charity_commission (
   ingested_at             TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS source_snapshots (
+  snapshot_id       TEXT PRIMARY KEY,
+  source_type       TEXT NOT NULL,
+  source_name       TEXT NOT NULL,
+  source_url        TEXT NOT NULL,
+  record_identifier TEXT NOT NULL,
+  observed_at       TEXT NOT NULL,
+  retrieved_at      TEXT NOT NULL,
+  content_hash      TEXT NOT NULL,
+  raw_json          TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS canonical_organisations (
+  organisation_id TEXT PRIMARY KEY,
+  canonical_name  TEXT NOT NULL,
+  entity_type     TEXT NOT NULL,
+  status          TEXT NOT NULL,
+  created_at      TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS organisation_facts (
+  fact_id           TEXT PRIMARY KEY,
+  organisation_id   TEXT NOT NULL,
+  fact_type         TEXT NOT NULL,
+  fact_value        TEXT NOT NULL,
+  source_snapshot_id TEXT NOT NULL,
+  confidence        REAL NOT NULL,
+  FOREIGN KEY (organisation_id) REFERENCES canonical_organisations(organisation_id),
+  FOREIGN KEY (source_snapshot_id) REFERENCES source_snapshots(snapshot_id)
+);
+
+CREATE TABLE IF NOT EXISTS identity_candidates (
+  candidate_id  TEXT PRIMARY KEY,
+  left_system   TEXT NOT NULL,
+  left_id       TEXT NOT NULL,
+  right_system  TEXT NOT NULL,
+  right_id      TEXT NOT NULL,
+  relationship  TEXT NOT NULL,
+  status        TEXT NOT NULL,
+  rationale     TEXT NOT NULL,
+  created_at    TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS source_charity_trustee (
   reg_charity_number TEXT NOT NULL,
   trustee_name        TEXT,
