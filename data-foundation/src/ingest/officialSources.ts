@@ -8,8 +8,8 @@
  */
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
-import db from '../db';
-import { hashSnapshot } from '../provenance';
+import { makeSnapshot } from '../provenance';
+import { writeSnapshot } from './snapshotStore';
 
 dotenv.config();
 
@@ -26,24 +26,26 @@ export const DEFAULT_OFFICIAL_TARGETS: OfficialSourceTarget[] = [
 ];
 
 export async function collectOfficialSource(target: OfficialSourceTarget): Promise<string> {
-  const response = await fetch(target.url, { timeout: 20_000 });
+  const response = await fetch(target.url, {
+    timeout: 20_000,
+    headers: {
+      Accept: 'text/html,application/xhtml+xml',
+      'User-Agent': 'ZakatGridDataFoundation/0.1 (+auditable charity research)',
+    },
+  });
   if (!response.ok) throw new Error(`${target.url} returned HTTP ${response.status}`);
   const body = await response.text();
   const observedAt = new Date().toISOString();
-  const snapshotId = `org_${hashSnapshot(body).slice(0, 20)}`;
-  db.prepare(`INSERT OR REPLACE INTO source_snapshots
-    (snapshot_id, source_type, source_name, source_url, record_identifier, observed_at, retrieved_at, content_hash, raw_json)
-    VALUES (?, 'organisation_report', ?, ?, ?, ?, ?, ?, ?)`).run(
-    snapshotId,
+  const snapshot = makeSnapshot(
+    'organisation reported',
     target.source_kind === 'annual_report' ? 'Organisation annual report' : 'Organisation website',
     target.url,
     target.organisation_id,
-    observedAt,
-    observedAt,
-    hashSnapshot(body),
-    JSON.stringify({ organisation_id: target.organisation_id, source_kind: target.source_kind, body })
+    { organisation_id: target.organisation_id, source_kind: target.source_kind, body },
+    observedAt
   );
-  return snapshotId;
+  const outputPath = writeSnapshot(snapshot);
+  return outputPath;
 }
 
 export async function collectOfficialSources(targets = DEFAULT_OFFICIAL_TARGETS): Promise<void> {
