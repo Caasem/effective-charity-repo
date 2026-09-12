@@ -64,6 +64,8 @@ development to avoid stale cached bundles.
   needs breakdown, lead organisation, coordination signal.
 - **Charity detail** (`app/charity/[id].tsx`) — transparency profile,
   areas of focus, active initiatives.
+- **Evidence** (`app/(tabs)/evidence.tsx`) — visible pilot profiles with
+  source counts, known facts, evidence gaps, and unresolved identity review.
 - **Donate flow** (`app/donate/[id].tsx`) — 3-step giving-type → amount →
   payment → confirmation flow with simulated payment (no real charges).
 

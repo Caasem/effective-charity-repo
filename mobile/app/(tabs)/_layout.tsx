@@ -49,6 +49,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="evidence"
+        options={{
+          title: 'Evidence',
+          tabBarIcon: ({ color: c, size }) => <Ionicons name="shield-checkmark" size={size} color={c} />,
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
