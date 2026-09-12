@@ -58,6 +58,16 @@ This is a raw evidence capture step, not a substitute for the richer
 Charity Commission extract or authenticated Companies House API. Those remain
 the next upgrade when the extract URL and API key are available.
 
+After collection, extract only labelled facts from the saved pages:
+
+```bash
+SOURCE_SNAPSHOT_DIR=./data/source-snapshots npm run extract:facts
+```
+
+The extractor writes `data/extracted-facts.json`. It is intentionally
+conservative: facts are linked to the snapshot filename and source URL, and
+unlabelled or ambiguous page content is left out for manual review.
+
 With no API keys configured, the pipeline uses deterministic pilot identifier
 fixtures for the three charities and two Muslim Aid-related Companies House
 identifiers. Live values must be collected through the configured adapters.
