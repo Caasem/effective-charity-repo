@@ -71,3 +71,15 @@ website snapshots for Islamic Relief Worldwide, Muslim Aid, and Human Appeal.
 Each profile must be provenance-complete at fact level, with unresolved
 identity candidates reviewed explicitly. Do this before maps, payments, AI,
 or a single composite score.
+
+### Data collection sequence
+
+1. Establish legal identity and historical identifiers.
+2. Collect Charity Commission and Companies House records.
+3. Collect official websites, annual reports, audited accounts, impact
+   reports, programme pages, and governance documents.
+4. Preserve raw snapshots and metadata before extracting facts.
+5. Attach every fact to its source, date, confidence, and hash.
+6. Review identity links and retain unresolved candidates explicitly.
+7. Only then derive comparisons, coordination signals, maps, scores, or AI
+   summaries. Third-party reporting is a later, separately labelled layer.
