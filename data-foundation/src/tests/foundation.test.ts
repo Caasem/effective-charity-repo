@@ -5,6 +5,7 @@ import { normalizeName, nameSimilarity } from '../entity-resolution/match';
 import { isGuardedIdentity } from '../entity-resolution/guards';
 import { MUSLIM_AID_IDENTITY_CANDIDATES, PILOT_CHARITIES, PILOT_COMPANIES } from '../ingest/fixtures';
 import { extractFacts } from '../ingest/factExtractor';
+import { buildProfiles } from '../profiles/buildProfiles';
 
 assert.strictEqual(normalizeName('Islamic Relief Worldwide Ltd'), 'islamic relief');
 assert.strictEqual(nameSimilarity('Muslim Aid', 'MUSLIM AID'), 1);
@@ -43,4 +44,16 @@ const extracted = extractFacts(
 );
 assert.strictEqual(extracted.some((fact) => fact.fact_type === 'source_page_captured'), true);
 assert.strictEqual(extracted.every((fact) => fact.source_snapshot_id === 'snapshot-1'), true);
+const profiles = buildProfiles(extracted, [{
+  snapshot_id: 'snapshot-1',
+  source_type: 'government/regulator verified',
+  source_name: 'Companies House',
+  source_url: 'https://example.test/company/CE012794',
+  record_identifier: '1000853',
+  observed_at: '2026-09-12',
+  retrieved_at: '2026-09-12',
+  content_hash: 'hash',
+}]);
+assert.strictEqual(profiles.length, 3);
+assert.strictEqual(profiles.find((profile) => profile.charity_commission_number === '1000853')?.identity_candidates?.length, 3);
 console.log('foundation tests passed');

@@ -68,6 +68,17 @@ The extractor writes `data/extracted-facts.json`. It is intentionally
 conservative: facts are linked to the snapshot filename and source URL, and
 unlabelled or ambiguous page content is left out for manual review.
 
+Build provisional pilot profiles from the collected evidence:
+
+```bash
+npm run profiles:build
+```
+
+This writes one JSON profile per pilot under `data/profiles/`. Profiles are
+provisional until the live regulator extract and exact annual-report/account
+documents are added; Muslim Aid's unresolved candidate relationships remain
+embedded rather than silently merged.
+
 With no API keys configured, the pipeline uses deterministic pilot identifier
 fixtures for the three charities and two Muslim Aid-related Companies House
 identifiers. Live values must be collected through the configured adapters.
