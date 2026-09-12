@@ -61,8 +61,8 @@ reports a 404 — the ingester tells you exactly this.)
 
 ## Source and identity guarantees
 
-Source types are `government_regulator_verified`,
-`organisation_reported`, `third_party_reported`, and `zakat_grid_derived`.
+Source types are `government/regulator verified`, `organisation reported`,
+`third-party reported`, and `Zakat Grid derived`.
 Every stored snapshot includes source URL, record/document identifier,
 observed/retrieved dates, confidence at fact level, and a SHA-256 hash.
 `identity_candidates` explicitly retains unresolved relationships between
@@ -74,6 +74,35 @@ environment variable and add it to the adapter target list. Credentials
 needed are `COMPANIES_HOUSE_API_KEY`; the Charity Commission extract URL is
 versioned and must be copied from its download page. Without those values,
 the pipeline remains deterministic but only contains identifier-level facts.
+
+## Collection order
+
+Collect evidence in this order. Do not create a score, map, recommendation,
+or AI summary from a later layer until the earlier layer is complete enough
+to audit.
+
+1. **Establish identity:** collect the Charity Commission number, Companies
+   House number, legal name, status, and historical identifiers for each pilot.
+2. **Collect regulator records:** download Charity Commission records and
+   Companies House profiles, filings, officers, and accounts where available.
+3. **Collect organisation-reported material:** snapshot each official website,
+   annual report, audited accounts, impact report, programme page, and
+   governance/policy document using an exact URL.
+4. **Preserve evidence:** store the original response or document metadata,
+   source type, URL, record/document identifier, observed/retrieved dates,
+   content hash, and retrieval errors.
+5. **Extract facts:** attach each individual fact to one or more source
+   snapshots with a confidence value; never replace missing facts with a
+   guess.
+6. **Resolve identities:** link records only when registration evidence or
+   documented review supports the relationship. Keep uncertain candidates in
+   `identity_candidates`.
+7. **Add Zakat Grid derivations:** calculate shared locations, cause overlap,
+   data-quality flags, and coordination candidates only from cited facts.
+
+Third-party reports and ratings are a later, separately labelled layer. They
+must never override a regulator record or an organisation's primary document
+without an explicit review record.
 
 ## Storage
 
