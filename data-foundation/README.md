@@ -21,6 +21,9 @@ Companies House ─────┘   (entity resolution)  (knowledge graph)
    adapters, preserving raw snapshots, hashes, URLs, identifiers, and dates.
    `officialSources.ts` optionally snapshots pilot websites and manually
    configured annual-report URLs.
+   Snapshots can be collected without the SQLite native driver: the adapter
+   writes auditable JSON files to `SOURCE_SNAPSHOT_DIR` (default
+   `data/source-snapshots/`) and can be imported into the database later.
 2. **Resolve** (`src/entity-resolution/`) creates canonical records and
    fact-level provenance. Muslim Aid identity candidates are stored as
    unresolved relationships and are never silently merged.
@@ -35,6 +38,13 @@ Companies House ─────┘   (entity resolution)  (knowledge graph)
 npm install
 cp .env.example .env
 npm run pipeline:all
+```
+
+To collect official organisation material immediately, independently of the
+local SQLite driver:
+
+```bash
+SOURCE_SNAPSHOT_DIR=./data/source-snapshots npm run ingest:official
 ```
 
 With no API keys configured, the pipeline uses deterministic pilot identifier
