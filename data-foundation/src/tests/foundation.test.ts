@@ -4,6 +4,7 @@ import { canonicalOrganisation } from '../canonical';
 import { normalizeName, nameSimilarity } from '../entity-resolution/match';
 import { isGuardedIdentity } from '../entity-resolution/guards';
 import { MUSLIM_AID_IDENTITY_CANDIDATES, PILOT_CHARITIES, PILOT_COMPANIES } from '../ingest/fixtures';
+import { extractFacts } from '../ingest/factExtractor';
 
 assert.strictEqual(normalizeName('Islamic Relief Worldwide Ltd'), 'islamic relief');
 assert.strictEqual(nameSimilarity('Muslim Aid', 'MUSLIM AID'), 1);
@@ -27,4 +28,19 @@ assert.strictEqual(MUSLIM_AID_IDENTITY_CANDIDATES.every((candidate) => candidate
 assert.strictEqual(isGuardedIdentity('companies_house', 'CE012794'), true);
 assert.strictEqual(isGuardedIdentity('companies_house', '06537070'), true);
 assert.strictEqual(isGuardedIdentity('companies_house', '12345678'), false);
+const extracted = extractFacts(
+  {
+    source_type: 'government/regulator verified',
+    source_name: 'Companies House',
+    source_url: 'https://example.test/company/CE012794',
+    record_identifier: 'CE012794',
+    observed_at: '2026-09-12',
+    retrieved_at: '2026-09-12',
+    content_hash: 'hash',
+    raw_json: { body: '<h1>Company name MUSLIM AID</h1><p>Company status Active</p>' },
+  },
+  'snapshot-1'
+);
+assert.strictEqual(extracted.some((fact) => fact.fact_type === 'source_page_captured'), true);
+assert.strictEqual(extracted.every((fact) => fact.source_snapshot_id === 'snapshot-1'), true);
 console.log('foundation tests passed');
