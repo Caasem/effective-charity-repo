@@ -63,4 +63,11 @@ easier, reducing duplication and improving accountability.
 
 ## Open questions
 
-_(none currently)_
+### Next milestone: three live, auditable profiles
+
+Replace the identifier-only pilot fixtures with live Charity Commission and
+Companies House records plus exact official annual-report documents and
+website snapshots for Islamic Relief Worldwide, Muslim Aid, and Human Appeal.
+Each profile must be provenance-complete at fact level, with unresolved
+identity candidates reviewed explicitly. Do this before maps, payments, AI,
+or a single composite score.

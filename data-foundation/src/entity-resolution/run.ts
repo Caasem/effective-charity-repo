@@ -15,6 +15,8 @@
 import crypto from 'crypto';
 import db from '../db';
 import { matchByName } from './match';
+import { isGuardedIdentity } from './guards';
+import { MUSLIM_AID_IDENTITY_CANDIDATES } from '../ingest/fixtures';
 
 function entityIdFor(system: string, id: string): string {
   return 'ent_' + crypto.createHash('sha1').update(`${system}:${id}`).digest('hex').slice(0, 16);
@@ -28,6 +30,31 @@ const insertLink = db.prepare(`
   VALUES (?, ?, ?, ?, ?)
 `);
 
+const insertCandidate = db.prepare(`
+  INSERT OR REPLACE INTO identity_candidates
+    (candidate_id, left_system, left_id, right_system, right_id, relationship, status, rationale)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+function candidateId(candidate: (typeof MUSLIM_AID_IDENTITY_CANDIDATES)[number]): string {
+  return `${candidate.left_system}:${candidate.left_id}|${candidate.right_system}:${candidate.right_id}`;
+}
+
+function persistIdentityCandidates() {
+  for (const candidate of MUSLIM_AID_IDENTITY_CANDIDATES) {
+    insertCandidate.run(
+      candidateId(candidate),
+      candidate.left_system,
+      candidate.left_id,
+      candidate.right_system,
+      candidate.right_id,
+      candidate.relationship,
+      candidate.status,
+      candidate.rationale
+    );
+  }
+}
+
 function run() {
   const charities = db
     .prepare('SELECT reg_charity_number as id, charity_name as name FROM source_charity_commission')
@@ -37,6 +64,7 @@ function run() {
     .all() as { id: string; name: string }[];
 
   console.log(`Resolving entities: ${charities.length} charity records, ${companies.length} company records.`);
+  persistIdentityCandidates();
 
   // 1. every charity is its own entity, keyed off the charity source
   const charityEntityIds = new Map<string, string>();
@@ -48,7 +76,10 @@ function run() {
   }
 
   // 2. match companies against charities by name
-  const matches = matchByName('companies_house', companies, 'charity_commission', charities, 0.82);
+  // These identifiers are deliberately unresolved pilot candidates. Exact
+  // name similarity is not evidence of legal identity, especially here.
+  const guardedCompanies = companies.filter((company) => !isGuardedIdentity('companies_house', company.id));
+  const matches = matchByName('companies_house', guardedCompanies, 'charity_commission', charities, 0.82);
   const matchedCompanyIds = new Set(matches.map((m) => m.sourceA.id));
 
   for (const m of matches) {

@@ -31,6 +31,23 @@ No native build tools installed? Install the free **Expo Go** app on your
 phone, run `npm start`, and scan the QR code — the full native app runs
 on your device in seconds without any App Store submission.
 
+## PWA installation
+
+The web export is installable as a Progressive Web App. Expo supplies the
+web metadata and the `public/manifest.json` file declares the standalone app
+experience, theme, start URL, and existing app icon. A production web export
+also registers `public/sw.js` for offline app-shell caching.
+
+```bash
+npm run web
+# For installability checks, create a production export and serve it over HTTPS
+npm run export:web
+```
+
+The browser must load the app over HTTPS (or `localhost`) before it will offer
+the install prompt. The service worker is intentionally disabled during local
+development to avoid stale cached bundles.
+
 ## Screens
 
 - **Home** (`app/(tabs)/index.tsx`) — network-wide live stats, critical

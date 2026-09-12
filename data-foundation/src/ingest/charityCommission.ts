@@ -26,6 +26,9 @@
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import db from '../db';
+import { makeSnapshot } from '../provenance';
+import { canonicalOrganisation } from '../canonical';
+import { PILOT_CHARITIES } from './fixtures';
 
 dotenv.config();
 
@@ -43,6 +46,8 @@ interface NormalizedCharity {
   classification?: string[];
   trustees?: string[];
   raw?: unknown;
+  source_url?: string;
+  observed_at?: string;
 }
 
 const upsertCharity = db.prepare(`
@@ -89,6 +94,34 @@ function persist(c: NormalizedCharity) {
     db.prepare('DELETE FROM source_charity_trustee WHERE reg_charity_number = ?').run(c.reg_charity_number);
     for (const t of c.trustees) insertTrustee.run(c.reg_charity_number, t, null);
   }
+  const raw = c.raw ?? c;
+  const snapshot = makeSnapshot(
+    'government/regulator verified',
+    'UK Charity Commission',
+    c.source_url ?? `https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/${c.reg_charity_number}`,
+    c.reg_charity_number,
+    raw,
+    c.observed_at ?? new Date().toISOString().slice(0, 10)
+  );
+  const snapshotId = `cc_${c.reg_charity_number}_${snapshot.content_hash.slice(0, 12)}`;
+  db.prepare(`INSERT OR REPLACE INTO source_snapshots
+    (snapshot_id, source_type, source_name, source_url, record_identifier, observed_at, retrieved_at, content_hash, raw_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    snapshotId, snapshot.source_type, snapshot.source_name, snapshot.source_url,
+    snapshot.record_identifier, snapshot.observed_at, snapshot.retrieved_at,
+    snapshot.content_hash, JSON.stringify(snapshot.raw_json)
+  );
+  const organisationId = `cc_${c.reg_charity_number}`;
+  const canonical = canonicalOrganisation(organisationId, c.charity_name, 'charity', Boolean(c.registration_status));
+  db.prepare(`INSERT OR REPLACE INTO canonical_organisations
+    (organisation_id, canonical_name, entity_type, status) VALUES (?, ?, ?, ?)`).run(
+    canonical.organisation_id, canonical.canonical_name, canonical.entity_type, canonical.status
+  );
+  const fact = db.prepare(`INSERT OR REPLACE INTO organisation_facts
+    (fact_id, organisation_id, fact_type, fact_value, source_snapshot_id, confidence)
+    VALUES (?, ?, ?, ?, ?, ?)`);
+  fact.run(`fact_${organisationId}_name`, organisationId, 'registered_name', c.charity_name, snapshotId, 1);
+  fact.run(`fact_${organisationId}_registration_number`, organisationId, 'charity_commission_number', c.reg_charity_number, snapshotId, 1);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -132,46 +165,12 @@ async function ingestFromExtract(url: string): Promise<number> {
 /* ---------------------------------------------------------------------- */
 
 const SEED_CHARITIES: NormalizedCharity[] = [
-  {
-    reg_charity_number: '328158',
-    charity_name: 'ISLAMIC RELIEF WORLDWIDE',
-    registration_status: 'Registered',
-    charity_type: 'Relief of poverty',
-    operates_in: ['Sudan', 'Somalia', 'Pakistan', 'Yemen', 'United Kingdom'],
-    classification: ['Overseas Aid/Famine Relief', 'General Charitable Purposes'],
-  },
-  {
-    reg_charity_number: '294224',
-    charity_name: 'MUSLIM AID',
-    registration_status: 'Registered',
-    charity_type: 'Relief of poverty',
-    operates_in: ['Somalia', 'Bangladesh', 'Gaza', 'United Kingdom'],
-    classification: ['Overseas Aid/Famine Relief', 'Education/Training'],
-  },
-  {
-    reg_charity_number: '1128341',
-    charity_name: 'PENNY APPEAL',
-    registration_status: 'Registered',
-    charity_type: 'Relief of poverty',
-    operates_in: ['Pakistan', 'Kenya', 'Gaza', 'United Kingdom'],
-    classification: ['Overseas Aid/Famine Relief'],
-  },
-  {
-    reg_charity_number: '1176462',
-    charity_name: 'HUMAN APPEAL',
-    registration_status: 'Registered',
-    charity_type: 'Relief of poverty',
-    operates_in: ['Yemen', 'Syria', 'Gaza', 'United Kingdom'],
-    classification: ['Overseas Aid/Famine Relief', 'General Charitable Purposes'],
-  },
-  {
-    reg_charity_number: '1176736',
-    charity_name: 'MATW PROJECT UK',
-    registration_status: 'Registered',
-    charity_type: 'Relief of poverty',
-    operates_in: ['Global', 'United Kingdom'],
-    classification: ['Overseas Aid/Famine Relief'],
-  },
+  ...PILOT_CHARITIES.map((charity) => ({
+    ...charity,
+    registration_status: 'Identifier fixture; live record not retrieved',
+    raw: charity,
+    observed_at: '2026-09-12',
+  })),
 ];
 
 function ingestSeed(): number {

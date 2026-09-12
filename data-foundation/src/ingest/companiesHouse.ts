@@ -16,6 +16,9 @@
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import db from '../db';
+import { makeSnapshot } from '../provenance';
+import { canonicalOrganisation } from '../canonical';
+import { PILOT_COMPANIES } from './fixtures';
 
 dotenv.config();
 
@@ -115,12 +118,78 @@ async function ingestCompany(companyNumber: string) {
     insertOfficer.run(companyNumber, o.name ?? null, o.officer_role ?? null, o.appointed_on ?? null);
   }
 
+  persistCompanyProvenance(profile, `https://find-and-update.company-information.service.gov.uk/company/${companyNumber}`);
+
   console.log(`  ✓ ${profile.company_name} (${companyNumber}) — ${officers.items?.length ?? 0} officers`);
+}
+
+function persistCompanyProvenance(profile: any, sourceUrl: string) {
+  const raw = profile;
+  const snapshot = makeSnapshot(
+    'government/regulator verified',
+    'Companies House',
+    sourceUrl,
+    profile.company_number,
+    raw,
+    profile.last_accounts?.period_end_on ?? profile.date_of_creation ?? new Date().toISOString().slice(0, 10)
+  );
+  const snapshotId = `ch_${profile.company_number}_${snapshot.content_hash.slice(0, 12)}`;
+  db.prepare(`INSERT OR REPLACE INTO source_snapshots
+    (snapshot_id, source_type, source_name, source_url, record_identifier, observed_at, retrieved_at, content_hash, raw_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    snapshotId, snapshot.source_type, snapshot.source_name, snapshot.source_url,
+    snapshot.record_identifier, snapshot.observed_at, snapshot.retrieved_at,
+    snapshot.content_hash, JSON.stringify(snapshot.raw_json)
+  );
+  const organisationId = `ch_${profile.company_number}`;
+  const canonical = canonicalOrganisation(organisationId, profile.company_name, 'company');
+  db.prepare(`INSERT OR REPLACE INTO canonical_organisations
+    (organisation_id, canonical_name, entity_type, status) VALUES (?, ?, ?, ?)`).run(
+    canonical.organisation_id, canonical.canonical_name, canonical.entity_type, canonical.status
+  );
+  db.prepare(`INSERT OR REPLACE INTO organisation_facts
+    (fact_id, organisation_id, fact_type, fact_value, source_snapshot_id, confidence)
+    VALUES (?, ?, ?, ?, ?, ?)`).run(
+    `fact_${organisationId}_number`, organisationId, 'companies_house_number',
+    profile.company_number, snapshotId, 1
+  );
+}
+
+function ingestFixtureCompanies(): number {
+  for (const company of PILOT_COMPANIES) {
+    const profile = {
+      company_number: company.company_number,
+      company_name: company.company_name,
+      company_status: 'fixture_identifier_only',
+      type: 'company',
+      date_of_creation: null,
+      sic_codes: [],
+      registered_office_address: {},
+    };
+    upsertCompany.run({
+      company_number: profile.company_number,
+      company_name: profile.company_name,
+      company_status: profile.company_status,
+      company_type: profile.type,
+      date_of_creation: null,
+      sic_codes: '[]',
+      registered_address: '{}',
+      raw_json: JSON.stringify(profile),
+    });
+    persistCompanyProvenance(profile, company.source_url);
+  }
+  return PILOT_COMPANIES.length;
 }
 
 async function main() {
   const argQuery = process.argv.slice(2).join(' ').trim();
   const queries = argQuery ? [argQuery] : DEFAULT_SEED_QUERIES;
+
+  if (!process.env.COMPANIES_HOUSE_API_KEY && !argQuery) {
+    console.log('COMPANIES_HOUSE_API_KEY not set — using deterministic pilot identifier fixtures.');
+    console.log(`\nDone. Ingested ${ingestFixtureCompanies()} pilot company identifiers.`);
+    return;
+  }
 
   let totalIngested = 0;
   for (const q of queries) {
@@ -157,4 +226,4 @@ if (require.main === module) {
   });
 }
 
-export { searchCompanies, getCompanyProfile, ingestCompany };
+export { searchCompanies, getCompanyProfile, ingestCompany, ingestFixtureCompanies };
