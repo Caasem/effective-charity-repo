@@ -9,6 +9,7 @@
     "ingest:companies-house": "ts-node src/ingest/companiesHouse.ts",
     "ingest:charity-commission": "ts-node src/ingest/charityCommission.ts",
     "ingest:official": "ts-node src/ingest/officialSources.ts",
+    "ingest:regulators": "ts-node src/ingest/regulatorSources.ts",
     "resolve:entities": "ts-node src/entity-resolution/run.ts",
     "graph:build": "ts-node src/graph/build.ts",
     "pipeline:all": "npm run ingest:charity-commission && npm run ingest:companies-house && npm run ingest:official && npm run resolve:entities && npm run graph:build",

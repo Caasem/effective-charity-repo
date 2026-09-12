@@ -47,6 +47,17 @@ local SQLite driver:
 SOURCE_SNAPSHOT_DIR=./data/source-snapshots npm run ingest:official
 ```
 
+To collect public regulator record pages for the three charities and the two
+Muslim Aid company candidates:
+
+```bash
+SOURCE_SNAPSHOT_DIR=./data/source-snapshots npm run ingest:regulators
+```
+
+This is a raw evidence capture step, not a substitute for the richer
+Charity Commission extract or authenticated Companies House API. Those remain
+the next upgrade when the extract URL and API key are available.
+
 With no API keys configured, the pipeline uses deterministic pilot identifier
 fixtures for the three charities and two Muslim Aid-related Companies House
 identifiers. Live values must be collected through the configured adapters.
