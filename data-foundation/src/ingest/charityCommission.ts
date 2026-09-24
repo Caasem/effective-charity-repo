@@ -23,12 +23,12 @@
  * registered numbers and names) so the rest of the pipeline has real rows
  * to work with immediately.
  */
-import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import db from '../db';
 import { makeSnapshot } from '../provenance';
 import { canonicalOrganisation } from '../canonical';
 import { PILOT_CHARITIES } from './fixtures';
+import { proxiedFetch as fetch } from './httpClient';
 import {
   getCharityDetailsV2,
   getCharityWhoWhatHow,
@@ -53,6 +53,7 @@ interface NormalizedCharity {
   operates_in?: string[];
   classification?: string[];
   trustees?: string[];
+  companies_house_number?: string;
   raw?: unknown;
   source_url?: string;
   observed_at?: string;
@@ -130,6 +131,11 @@ function persist(c: NormalizedCharity) {
     VALUES (?, ?, ?, ?, ?, ?)`);
   fact.run(`fact_${organisationId}_name`, organisationId, 'registered_name', c.charity_name, snapshotId, 1);
   fact.run(`fact_${organisationId}_registration_number`, organisationId, 'charity_commission_number', c.reg_charity_number, snapshotId, 1);
+  if (c.companies_house_number) {
+    // From GetAllCharityDetailsV2.charity_co_reg_number — a confirmed regulator-reported
+    // link, not a name-similarity candidate, so it doesn't go through identity_candidates.
+    fact.run(`fact_${organisationId}_companies_house_number`, organisationId, 'companies_house_registration_number', c.companies_house_number, snapshotId, 1);
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -208,6 +214,7 @@ async function ingestPilotFromApi(): Promise<number> {
         operates_in: areaOfOperation.map((a) => a.area_of_operation),
         classification: whoWhatHow.map((w) => `${w.classification_type}: ${w.classification_desc}`),
         trustees: trustees.map((t) => t.name),
+        companies_house_number: details.charity_co_reg_number ?? undefined,
         raw: { details, whoWhatHow, areaOfOperation },
         source_url: `https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/${regNumber}`,
       });

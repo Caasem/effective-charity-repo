@@ -16,8 +16,8 @@
  * when a real use for them shows up — this pipeline avoids ingesting data no
  * feature actually consumes.
  */
-import fetch from 'node-fetch';
 import dotenv from 'dotenv';
+import { proxiedFetch as fetch } from './httpClient';
 
 dotenv.config();
 

@@ -13,7 +13,7 @@ import { isKnownConstituency } from '../referenceData/constituencies';
 assert.strictEqual(normalizeName('Islamic Relief Worldwide Ltd'), 'islamic relief');
 assert.strictEqual(nameSimilarity('Muslim Aid', 'MUSLIM AID'), 1);
 assert.strictEqual(PILOT_CHARITIES.length, 3);
-assert.deepStrictEqual(PILOT_CHARITIES.map((c) => c.reg_charity_number), ['328158', '1000853', '1176462']);
+assert.deepStrictEqual(PILOT_CHARITIES.map((c) => c.reg_charity_number), ['328158', '1176462', '1154288']);
 assert.deepStrictEqual(PILOT_COMPANIES.map((c) => c.company_number), ['CE012794', '06537070']);
 
 const raw = { company_number: 'CE012794', company_name: 'MUSLIM AID' };
@@ -27,7 +27,7 @@ const snapshot = makeSnapshot(
 );
 assert.strictEqual(snapshot.content_hash, hashSnapshot(raw));
 assert.strictEqual(snapshot.record_identifier, 'CE012794');
-assert.strictEqual(canonicalOrganisation('cc_1000853', 'MUSLIM AID', 'charity').status, 'provisional');
+assert.strictEqual(canonicalOrganisation('cc_1176462', 'MUSLIM AID', 'charity').status, 'provisional');
 assert.strictEqual(MUSLIM_AID_IDENTITY_CANDIDATES.every((candidate) => candidate.status === 'unresolved'), true);
 assert.strictEqual(isGuardedIdentity('companies_house', 'CE012794'), true);
 assert.strictEqual(isGuardedIdentity('companies_house', '06537070'), true);
@@ -52,13 +52,13 @@ const profiles = buildProfiles(extracted, [{
   source_type: 'government/regulator verified',
   source_name: 'Companies House',
   source_url: 'https://example.test/company/CE012794',
-  record_identifier: '1000853',
+  record_identifier: '1176462',
   observed_at: '2026-09-12',
   retrieved_at: '2026-09-12',
   content_hash: 'hash',
 }]);
 assert.strictEqual(profiles.length, 3);
-assert.strictEqual(profiles.find((profile) => profile.charity_commission_number === '1000853')?.identity_candidates?.length, 3);
+assert.strictEqual(profiles.find((profile) => profile.charity_commission_number === '1176462')?.identity_candidates?.length, 2);
 assert.strictEqual(classificationByCode('106')?.classification_desc, 'Overseas aid / famine relief');
 assert.strictEqual(classificationLabel('106'), 'What: Overseas aid / famine relief');
 assert.strictEqual(classificationLabel('999'), '999');

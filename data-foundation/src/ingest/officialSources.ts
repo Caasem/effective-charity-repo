@@ -6,10 +6,10 @@
  * create unverifiable evidence. Failed fetches are reported, never turned
  * into fabricated facts.
  */
-import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import { makeSnapshot } from '../provenance';
 import { writeSnapshot } from './snapshotStore';
+import { proxiedFetch as fetch } from './httpClient';
 
 dotenv.config();
 
@@ -21,8 +21,8 @@ export interface OfficialSourceTarget {
 
 export const DEFAULT_OFFICIAL_TARGETS: OfficialSourceTarget[] = [
   { organisation_id: 'cc_328158', url: 'https://www.islamic-relief.org.uk/', source_kind: 'website' },
-  { organisation_id: 'cc_1000853', url: 'https://www.muslimaid.org/', source_kind: 'website' },
-  { organisation_id: 'cc_1176462', url: 'https://humanappeal.org.uk/', source_kind: 'website' },
+  { organisation_id: 'cc_1176462', url: 'https://www.muslimaid.org/', source_kind: 'website' },
+  { organisation_id: 'cc_1154288', url: 'https://humanappeal.org.uk/', source_kind: 'website' },
 ];
 
 export async function collectOfficialSource(target: OfficialSourceTarget): Promise<string> {
@@ -51,8 +51,8 @@ export async function collectOfficialSource(target: OfficialSourceTarget): Promi
 export async function collectOfficialSources(targets = DEFAULT_OFFICIAL_TARGETS): Promise<void> {
   const annualReportTargets: OfficialSourceTarget[] = [
     ['ISLAMIC_RELIEF_ANNUAL_REPORT_URL', 'cc_328158'],
-    ['MUSLIM_AID_ANNUAL_REPORT_URL', 'cc_1000853'],
-    ['HUMAN_APPEAL_ANNUAL_REPORT_URL', 'cc_1176462'],
+    ['MUSLIM_AID_ANNUAL_REPORT_URL', 'cc_1176462'],
+    ['HUMAN_APPEAL_ANNUAL_REPORT_URL', 'cc_1154288'],
   ].flatMap(([envName, organisation_id]) => {
     const url = process.env[envName];
     return url ? [{ organisation_id, url, source_kind: 'annual_report' as const }] : [];
