@@ -6,6 +6,9 @@ import { isGuardedIdentity } from '../entity-resolution/guards';
 import { MUSLIM_AID_IDENTITY_CANDIDATES, PILOT_CHARITIES, PILOT_COMPANIES } from '../ingest/fixtures';
 import { extractFacts } from '../ingest/factExtractor';
 import { buildProfiles } from '../profiles/buildProfiles';
+import { classificationByCode, classificationLabel } from '../referenceData/classifications';
+import { classifyAreaOfOperation } from '../referenceData/areaOfOperation';
+import { isKnownConstituency } from '../referenceData/constituencies';
 
 assert.strictEqual(normalizeName('Islamic Relief Worldwide Ltd'), 'islamic relief');
 assert.strictEqual(nameSimilarity('Muslim Aid', 'MUSLIM AID'), 1);
@@ -56,4 +59,18 @@ const profiles = buildProfiles(extracted, [{
 }]);
 assert.strictEqual(profiles.length, 3);
 assert.strictEqual(profiles.find((profile) => profile.charity_commission_number === '1000853')?.identity_candidates?.length, 3);
+assert.strictEqual(classificationByCode('106')?.classification_desc, 'Overseas aid / famine relief');
+assert.strictEqual(classificationLabel('106'), 'What: Overseas aid / famine relief');
+assert.strictEqual(classificationLabel('999'), '999');
+assert.strictEqual(classificationByCode('999'), undefined);
+assert.strictEqual(classifyAreaOfOperation('Yemen')?.geographic_area_type, 'Country');
+assert.strictEqual(classifyAreaOfOperation('Yemen')?.country?.continent, 'Asia');
+assert.strictEqual(classifyAreaOfOperation('Tower Hamlets')?.geographic_area_type, 'Local Authority');
+assert.strictEqual(classifyAreaOfOperation('Tower Hamlets')?.local_authority?.metropolitan_county, 'Greater London');
+assert.strictEqual(classifyAreaOfOperation('Cardiff')?.local_authority?.welsh_ind, true);
+assert.strictEqual(classifyAreaOfOperation('Throughout England And Wales')?.geographic_area_type, 'Region');
+assert.strictEqual(classifyAreaOfOperation('Narnia'), null);
+assert.strictEqual(isKnownConstituency('Bethnal Green and Bow'), true);
+assert.strictEqual(isKnownConstituency('Not A Real Constituency'), false);
+
 console.log('foundation tests passed');
