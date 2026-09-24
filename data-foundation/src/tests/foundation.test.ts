@@ -12,8 +12,8 @@ import { isKnownConstituency } from '../referenceData/constituencies';
 
 assert.strictEqual(normalizeName('Islamic Relief Worldwide Ltd'), 'islamic relief');
 assert.strictEqual(nameSimilarity('Muslim Aid', 'MUSLIM AID'), 1);
-assert.strictEqual(PILOT_CHARITIES.length, 3);
-assert.deepStrictEqual(PILOT_CHARITIES.map((c) => c.reg_charity_number), ['328158', '1176462', '1154288']);
+assert.strictEqual(PILOT_CHARITIES.length, 4);
+assert.deepStrictEqual(PILOT_CHARITIES.map((c) => c.reg_charity_number), ['328158', '1176462', '1154288', '1001136']);
 assert.deepStrictEqual(PILOT_COMPANIES.map((c) => c.company_number), ['CE012794', '06537070']);
 
 const raw = { company_number: 'CE012794', company_name: 'MUSLIM AID' };
@@ -57,7 +57,7 @@ const profiles = buildProfiles(extracted, [{
   retrieved_at: '2026-09-12',
   content_hash: 'hash',
 }]);
-assert.strictEqual(profiles.length, 3);
+assert.strictEqual(profiles.length, 4);
 assert.strictEqual(profiles.find((profile) => profile.charity_commission_number === '1176462')?.identity_candidates?.length, 2);
 assert.strictEqual(classificationByCode('106')?.classification_desc, 'Overseas aid / famine relief');
 assert.strictEqual(classificationLabel('106'), 'What: Overseas aid / famine relief');

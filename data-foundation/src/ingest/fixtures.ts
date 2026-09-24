@@ -33,6 +33,15 @@ export const PILOT_CHARITIES = [
     charity_name: 'HUMAN APPEAL',
     source_url: 'https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1154288',
   },
+  {
+    // Registered legal name is exactly "WISE". Added to the registry
+    // 2026-09-24; confirmed by registration number directly (the register
+    // has 20+ charities whose name starts "WISE ...", so name search alone
+    // wasn't enough to be sure which one).
+    reg_charity_number: '1001136',
+    charity_name: 'WISE',
+    source_url: 'https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1001136',
+  },
 ] as const;
 
 export const PILOT_COMPANIES = [
