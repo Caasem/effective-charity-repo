@@ -24,7 +24,7 @@ easier, reducing duplication and improving accountability.
 | 6 | Volunteer network | ⬜ Not started |
 | 7 | Accountability | 🟡 Partial — transparency score displayed in mobile app using mock data; no verification pipeline |
 | 8 | Payment infrastructure | ⬜ Simulated only — no real Stripe integration |
-| 9 | Needs intelligence | 🟡 Partial — `data-foundation` knowledge graph answers "who's active where," not yet exposed via API or UI |
+| 9 | Needs intelligence | 🟡 Partial — `data-foundation` knowledge graph now runs against **live** Charity Commission data for all three pilots (classification, area of operation, trustees, 5yr financials); not yet exposed via API or UI |
 
 ## Active backlog (worked autonomously, top to bottom)
 
@@ -71,6 +71,23 @@ website snapshots for Islamic Relief Worldwide, Muslim Aid, and Human Appeal.
 Each profile must be provenance-complete at fact level, with unresolved
 identity candidates reviewed explicitly. Do this before maps, payments, AI,
 or a single composite score.
+
+**Progress (2026-09-24):** Charity Commission side is live. `CHARITY_COMMISSION_API_KEY`
+was documented but never actually implemented — built the missing client
+(`data-foundation/src/ingest/charityCommissionApi.ts`) against the official
+Register of Charities REST API, plus reference-data decoding for
+classification codes and area-of-operation (`data-foundation/src/referenceData/`).
+Running it against real credentials caught two real bugs, not cosmetic ones:
+`node-fetch` was silently ignoring this environment's proxy on every live
+call in the pipeline (fixed — `data-foundation/src/ingest/httpClient.ts`),
+and two of the three pilot registration numbers were wrong (`1000853` was an
+unrelated, removed charity; Human Appeal's real number, `1154288`, wasn't in
+the fixtures at all). Both are corrected and the pipeline now produces real
+coordination-candidate edges between the three actual charities. Still open:
+Companies House side (needs a free `COMPANIES_HOUSE_API_KEY`), and official
+website/annual-report snapshots (blocked on this environment's network
+egress allowlist, not a code issue — `www.islamic-relief.org.uk`,
+`www.muslimaid.org`, `humanappeal.org.uk` would need adding).
 
 ### Data collection sequence
 
