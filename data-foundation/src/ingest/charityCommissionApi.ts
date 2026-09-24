@@ -135,7 +135,7 @@ export function getCharityFinancialHistory(regNumber: string, suffix = 0): Promi
 
 /** GetCharityTrusteeInformationV2 — trustee names, chair flag, cross-charity links. */
 export function getCharityTrusteeInformationV2(regNumber: string, suffix = 0): Promise<TrusteeEntry[]> {
-  return get<TrusteeEntry[]>(`charitytrusteeinformationV2/${regNumber}/${suffix}`);
+  return get<TrusteeEntry[]>(`charitytrusteeinformationv2/${regNumber}/${suffix}`);
 }
 
 /** GetCharityConstituency — Westminster constituency of the charity's public contact address. */
