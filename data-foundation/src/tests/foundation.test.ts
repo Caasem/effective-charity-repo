@@ -73,4 +73,33 @@ assert.strictEqual(classifyAreaOfOperation('Narnia'), null);
 assert.strictEqual(isKnownConstituency('Bethnal Green and Bow'), true);
 assert.strictEqual(isKnownConstituency('Not A Real Constituency'), false);
 
+const websiteExtracted = extractFacts(
+  {
+    source_type: 'organisation reported',
+    source_name: 'Organisation website',
+    source_url: 'https://example-charity.test/',
+    record_identifier: 'cc_9999999',
+    observed_at: '2026-09-25',
+    retrieved_at: '2026-09-25',
+    content_hash: 'hash',
+    raw_json: {
+      body:
+        '<title>Example Charity | Helping People</title>' +
+        '<meta name="description" content="We help people worldwide.">' +
+        '<a href="/about/annual-report">Annual Report</a>' +
+        '<a href="/donate">Donate</a>' +
+        'Registered charity number: 1234567',
+    },
+  },
+  'website-snapshot-1'
+);
+assert.strictEqual(websiteExtracted.find((f) => f.fact_type === 'website_title')?.fact_value, 'Example Charity | Helping People');
+assert.strictEqual(websiteExtracted.find((f) => f.fact_type === 'website_meta_description')?.fact_value, 'We help people worldwide.');
+assert.strictEqual(websiteExtracted.find((f) => f.fact_type === 'self_reported_charity_number')?.fact_value, '1234567');
+assert.strictEqual(
+  websiteExtracted.find((f) => f.fact_type === 'discovered_document_link')?.fact_value,
+  'Annual Report -> https://example-charity.test/about/annual-report'
+);
+assert.strictEqual(websiteExtracted.some((f) => f.fact_type === 'discovered_document_link' && /donate/i.test(f.fact_value)), false);
+
 console.log('foundation tests passed');

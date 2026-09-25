@@ -44,6 +44,43 @@ export function extractFacts(snapshot: SourceSnapshot, snapshotId: string): Extr
     add('company_status', labelledValue(text, ['Company status', 'Status']));
     add('company_type', labelledValue(text, ['Company type', 'Type']));
     add('date_of_creation', labelledValue(text, ['Incorporated on', 'Date of creation']));
+  } else if (snapshot.source_name === 'Organisation website') {
+    // Deliberately shallow: pull only what the page states outright, never
+    // summarize or interpret its content. `raw` (not the stripped `text`) is
+    // used here because <title>/<meta>/<a> extraction needs the markup.
+    const raw = payload.body ?? '';
+
+    const titleMatch = raw.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    add('website_title', titleMatch?.[1]?.replace(/\s+/g, ' ').trim(), 1);
+
+    const descMatch = raw.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i);
+    add('website_meta_description', descMatch?.[1]?.trim(), 1);
+
+    // The charity's own claimed registration number, if stated on the page —
+    // a direct cross-check against the Charity Commission's number, not a guess.
+    const charityNumMatch = raw.match(/charity\s*(?:no\.?|number|registration number)\s*:?\s*#?\s*(\d{5,8})/i);
+    add('self_reported_charity_number', charityNumMatch?.[1], 1);
+
+    // Links pointing at governance/financial documents, surfaced so an exact
+    // document URL can be verified and snapshotted deliberately later — never
+    // downloaded or treated as the document itself from this pass alone.
+    const linkPattern = /<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+    const seenLinks = new Set<string>();
+    let linkMatch: RegExpExecArray | null;
+    while ((linkMatch = linkPattern.exec(raw)) && seenLinks.size < 5) {
+      const href = linkMatch[1];
+      const linkText = linkMatch[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!/annual report|accounts|impact report|trustees.? report|governance/i.test(href + ' ' + linkText)) continue;
+      let absolute: string;
+      try {
+        absolute = new URL(href, snapshot.source_url).toString();
+      } catch {
+        continue;
+      }
+      if (seenLinks.has(absolute)) continue;
+      seenLinks.add(absolute);
+      add('discovered_document_link', `${linkText || '(no link text)'} -> ${absolute}`, 0.9);
+    }
   }
   add('source_page_captured', snapshot.source_url, 1);
   return facts;

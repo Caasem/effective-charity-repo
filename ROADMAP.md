@@ -89,6 +89,21 @@ website/annual-report snapshots (blocked on this environment's network
 egress allowlist, not a code issue — `www.islamic-relief.org.uk`,
 `www.muslimaid.org`, `humanappeal.org.uk` would need adding).
 
+**Progress (2026-09-25):** Added a fourth pilot, WISE (charity `1001136`,
+High Wycombe), and built the organisation-website layer of `factExtractor.ts`
+— previously any website snapshot only ever produced a `source_page_captured`
+fact, nothing else. It now pulls `<title>`, meta description, a self-reported
+charity number (a real cross-check against the Charity Commission number, not
+a guess), and links to governance/financial documents on the page (feeds the
+still-empty `*_ANNUAL_REPORT_URL` env vars with real candidates instead of
+requiring a manual search from scratch). Ran against the two website
+snapshots already collected (Muslim Aid, Human Appeal): both produced a
+correct `discovered_document_link` pointing at their real annual-report page.
+Two known gaps, not code bugs: Islamic Relief's own site returns a genuine
+403 from its bot-blocker (not fixable by us — noted, not chased further per
+explicit decision), and WISE's site (`wise-web.org`) isn't in this
+environment's network allowlist yet, so it has no website snapshot.
+
 ### Data collection sequence
 
 1. Establish legal identity and historical identifiers.
