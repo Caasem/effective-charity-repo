@@ -74,7 +74,7 @@ export function buildProfiles(
         'Annual report and audited accounts have not yet been supplied as exact document URLs.',
         'Identity links remain provisional until registration evidence is reviewed.',
       ],
-      ...(charity.reg_charity_number === '1000853'
+      ...(charity.reg_charity_number === '1176462'
         ? { identity_candidates: MUSLIM_AID_IDENTITY_CANDIDATES }
         : {}),
     };

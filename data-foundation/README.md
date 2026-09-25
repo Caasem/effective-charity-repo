@@ -93,13 +93,29 @@ application, put the key in `.env` as `COMPANIES_HOUSE_API_KEY`, then:
 npm run ingest:companies-house -- "your search term"
 ```
 
-**Charity Commission** (free, no signup): visit
+**Charity Commission — bulk extract** (free, no signup): visit
 https://register-of-charities.charitycommission.gov.uk/en/register/full-register-download,
 copy the "download json" link for the `charity` table, put it in `.env` as
 `CHARITY_COMMISSION_EXTRACT_URL`. This is the Commission's own daily open
 data extract — 200k+ charities with income, spending, classification and
 trustee data. (The link is versioned and rotates, so re-copy it if a run
 reports a 404 — the ingester tells you exactly this.)
+
+**Charity Commission — official REST API** (free, needs signup): register at
+https://api-portal.charitycommission.gov.uk/signup, create a subscription,
+and put the key and base URL the portal gives you into `.env` as
+`CHARITY_COMMISSION_API_KEY` and `CHARITY_COMMISSION_API_BASE_URL`. Unlike
+the bulk extract, this enriches each of the three pilot charities
+individually — decoded What/Who/How classification, area of operation
+(local authority / region / country, each labelled with its
+`geographic_area_type`), trustees, and 5 years of financial history — via
+`src/ingest/charityCommissionApi.ts`. It runs automatically as part of
+`npm run ingest:charity-commission` whenever both env vars are set; without
+them it's skipped with a message, not silently ignored. `src/referenceData/`
+holds the Commission's published classification codes and area-of-operation
+lookups (local authorities, regions, countries+continent, constituencies)
+used to decode and validate what the API/extract returns — an area name that
+matches none of the three lists is treated as unrecognised, never guessed.
 
 ## Source and identity guarantees
 

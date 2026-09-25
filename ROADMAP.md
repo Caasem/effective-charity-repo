@@ -24,7 +24,7 @@ easier, reducing duplication and improving accountability.
 | 6 | Volunteer network | ⬜ Not started |
 | 7 | Accountability | 🟡 Partial — transparency score displayed in mobile app using mock data; no verification pipeline |
 | 8 | Payment infrastructure | ⬜ Simulated only — no real Stripe integration |
-| 9 | Needs intelligence | 🟡 Partial — `data-foundation` knowledge graph answers "who's active where," not yet exposed via API or UI |
+| 9 | Needs intelligence | 🟡 Partial — `data-foundation` knowledge graph now runs against **live** Charity Commission data for all three pilots (classification, area of operation, trustees, 5yr financials); not yet exposed via API or UI |
 
 ## Active backlog (worked autonomously, top to bottom)
 
@@ -71,6 +71,59 @@ website snapshots for Islamic Relief Worldwide, Muslim Aid, and Human Appeal.
 Each profile must be provenance-complete at fact level, with unresolved
 identity candidates reviewed explicitly. Do this before maps, payments, AI,
 or a single composite score.
+
+**Progress (2026-09-24):** Charity Commission side is live. `CHARITY_COMMISSION_API_KEY`
+was documented but never actually implemented — built the missing client
+(`data-foundation/src/ingest/charityCommissionApi.ts`) against the official
+Register of Charities REST API, plus reference-data decoding for
+classification codes and area-of-operation (`data-foundation/src/referenceData/`).
+Running it against real credentials caught two real bugs, not cosmetic ones:
+`node-fetch` was silently ignoring this environment's proxy on every live
+call in the pipeline (fixed — `data-foundation/src/ingest/httpClient.ts`),
+and two of the three pilot registration numbers were wrong (`1000853` was an
+unrelated, removed charity; Human Appeal's real number, `1154288`, wasn't in
+the fixtures at all). Both are corrected and the pipeline now produces real
+coordination-candidate edges between the three actual charities. Still open:
+Companies House side (needs a free `COMPANIES_HOUSE_API_KEY`), and official
+website/annual-report snapshots (blocked on this environment's network
+egress allowlist, not a code issue — `www.islamic-relief.org.uk`,
+`www.muslimaid.org`, `humanappeal.org.uk` would need adding).
+
+**Progress (2026-09-25):** Added a fourth pilot, WISE (charity `1001136`,
+High Wycombe), and built the organisation-website layer of `factExtractor.ts`
+— previously any website snapshot only ever produced a `source_page_captured`
+fact, nothing else. It now pulls `<title>`, meta description, a self-reported
+charity number (a real cross-check against the Charity Commission number, not
+a guess), and links to governance/financial documents on the page (feeds the
+still-empty `*_ANNUAL_REPORT_URL` env vars with real candidates instead of
+requiring a manual search from scratch). Ran against the two website
+snapshots already collected (Muslim Aid, Human Appeal): both produced a
+correct `discovered_document_link` pointing at their real annual-report page.
+Two known gaps, not code bugs: Islamic Relief's own site returns a genuine
+403 from its bot-blocker (not fixable by us — noted, not chased further per
+explicit decision), and WISE's site (`wise-web.org`) isn't in this
+environment's network allowlist yet, so it has no website snapshot.
+
+**Progress (2026-09-25, later):** Captured Human Appeal's real 2024 annual
+report/audited accounts — its exact URL found directly on the Charity
+Commission's own accounts-and-annual-returns page (not guessed, not
+discovered by a crawler), verified by content before treating it as
+evidence (pypdf/pdfminer confirmed the cover page reads "Human Appeal
+Annual Report & Financial Statements 2024" with both the correct charity
+number and Companies House number). This caught a real bug in
+`officialSources.ts`: it fetched every source with `.text()`, which
+silently corrupts binary PDF content via a lossy UTF-8 decode — the
+`content_hash` would have hashed mangled bytes, not the real document.
+Fixed with a binary-safe path (`collectBinarySource` — buffer fetch, hash
+the real bytes, store the PDF as a sibling file next to a metadata-only
+snapshot JSON) and added `annual_report_*` extraction to
+`factExtractor.ts` using `pdf-parse` — page count, cover text, and a
+self-reported charity number cross-checked against the Commission's own
+number. Verified end-to-end: the extracted `annual_report_self_reported_
+charity_number` (`1154288`) matches Human Appeal's Charity Commission
+number exactly. Muslim Aid and Islamic Relief's exact annual report URLs
+are still needed (finding them manually was judged faster than more
+crawling here).
 
 ### Data collection sequence
 
