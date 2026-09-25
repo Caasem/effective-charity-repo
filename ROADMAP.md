@@ -104,6 +104,27 @@ Two known gaps, not code bugs: Islamic Relief's own site returns a genuine
 explicit decision), and WISE's site (`wise-web.org`) isn't in this
 environment's network allowlist yet, so it has no website snapshot.
 
+**Progress (2026-09-25, later):** Captured Human Appeal's real 2024 annual
+report/audited accounts — its exact URL found directly on the Charity
+Commission's own accounts-and-annual-returns page (not guessed, not
+discovered by a crawler), verified by content before treating it as
+evidence (pypdf/pdfminer confirmed the cover page reads "Human Appeal
+Annual Report & Financial Statements 2024" with both the correct charity
+number and Companies House number). This caught a real bug in
+`officialSources.ts`: it fetched every source with `.text()`, which
+silently corrupts binary PDF content via a lossy UTF-8 decode — the
+`content_hash` would have hashed mangled bytes, not the real document.
+Fixed with a binary-safe path (`collectBinarySource` — buffer fetch, hash
+the real bytes, store the PDF as a sibling file next to a metadata-only
+snapshot JSON) and added `annual_report_*` extraction to
+`factExtractor.ts` using `pdf-parse` — page count, cover text, and a
+self-reported charity number cross-checked against the Commission's own
+number. Verified end-to-end: the extracted `annual_report_self_reported_
+charity_number` (`1154288`) matches Human Appeal's Charity Commission
+number exactly. Muslim Aid and Islamic Relief's exact annual report URLs
+are still needed (finding them manually was judged faster than more
+crawling here).
+
 ### Data collection sequence
 
 1. Establish legal identity and historical identifiers.

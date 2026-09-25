@@ -21,6 +21,11 @@ export function hashSnapshot(raw: unknown): string {
   return crypto.createHash('sha256').update(JSON.stringify(raw)).digest('hex');
 }
 
+/** For binary content (PDFs, images) — hashing the real bytes, not a lossy text decode of them. */
+export function hashBuffer(buf: Buffer): string {
+  return crypto.createHash('sha256').update(buf).digest('hex');
+}
+
 export function makeSnapshot(
   source_type: SourceType,
   source_name: string,
