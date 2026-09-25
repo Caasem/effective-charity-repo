@@ -157,3 +157,30 @@ export interface CharitySearchResult {
 export function searchCharityByName(name: string): Promise<CharitySearchResult[]> {
   return get<CharitySearchResult[]>(`searchCharityName/${encodeURIComponent(name)}`);
 }
+
+/**
+ * GetCharityRegulatoryReport — the Commission's own inquiry reports, statutory
+ * intervention notices, official warnings, schemes and orders. This is the one
+ * source in the whole pipeline that isn't the charity's own prepared filing:
+ * it's the regulator investigating, not receiving what it was handed.
+ */
+export interface RegulatoryReportEntry {
+  organisation_number: number;
+  report_name:
+    | 'Inquiry report (SORI)'
+    | 'Intention to direct winding up'
+    | 'Intention to use power'
+    | 'Interim manager'
+    | 'Official warning'
+    | 'Order'
+    | 'Regulatory case report'
+    | 'Scheme'
+    | 'Statement of inquiry'
+    | string;
+  report_location?: string | null;
+  date_published?: string | null;
+}
+
+export function getCharityRegulatoryReport(regNumber: string, suffix = 0): Promise<RegulatoryReportEntry[]> {
+  return get<RegulatoryReportEntry[]>(`charityregulatoryreport/${regNumber}/${suffix}`);
+}

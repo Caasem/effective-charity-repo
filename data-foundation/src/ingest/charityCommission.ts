@@ -35,6 +35,7 @@ import {
   getCharityAreaOfOperation,
   getCharityTrusteeInformationV2,
   getCharityFinancialHistory,
+  getCharityRegulatoryReport,
   CharityCommissionApiError,
 } from './charityCommissionApi';
 
@@ -188,17 +189,24 @@ const insertFinancialHistory = db.prepare(`
   VALUES (?, ?, 'financial_history_year', ?, ?, 1)
 `);
 
+const insertFact = db.prepare(`
+  INSERT OR REPLACE INTO organisation_facts
+    (fact_id, organisation_id, fact_type, fact_value, source_snapshot_id, confidence)
+  VALUES (?, ?, ?, ?, ?, ?)
+`);
+
 async function ingestPilotFromApi(): Promise<number> {
   let enriched = 0;
   for (const pilot of PILOT_CHARITIES) {
     const regNumber = pilot.reg_charity_number;
     try {
-      const [details, whoWhatHow, areaOfOperation, trustees, financialHistory] = await Promise.all([
+      const [details, whoWhatHow, areaOfOperation, trustees, financialHistory, regulatoryReports] = await Promise.all([
         getCharityDetailsV2(regNumber),
         getCharityWhoWhatHow(regNumber).catch(() => []),
         getCharityAreaOfOperation(regNumber).catch(() => []),
         getCharityTrusteeInformationV2(regNumber).catch(() => []),
         getCharityFinancialHistory(regNumber).catch(() => []),
+        getCharityRegulatoryReport(regNumber).catch(() => []),
       ]);
 
       persist({
@@ -251,10 +259,56 @@ async function ingestPilotFromApi(): Promise<number> {
         );
       }
 
+      // GetCharityRegulatoryReport — the one source in this pipeline that's the
+      // regulator's own independent scrutiny, not the charity's own filing.
+      // This endpoint's coverage looks limited to recent/current actions (it
+      // returns [] even for well-documented historical inquiries like The Cup
+      // Trust), so an empty result here is recorded as "checked, none found on
+      // this endpoint" — never treated as proof of a clean regulatory history.
+      const regReportSnapshot = makeSnapshot(
+        'government/regulator verified',
+        'UK Charity Commission — GetCharityRegulatoryReport',
+        `https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/${regNumber}`,
+        regNumber,
+        regulatoryReports,
+        new Date().toISOString().slice(0, 10)
+      );
+      const regReportSnapshotId = `cc_${snapshotSuffix}_regreport_${regReportSnapshot.content_hash.slice(0, 12)}`;
+      db.prepare(`INSERT OR REPLACE INTO source_snapshots
+        (snapshot_id, source_type, source_name, source_url, record_identifier, observed_at, retrieved_at, content_hash, raw_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        regReportSnapshotId, regReportSnapshot.source_type, regReportSnapshot.source_name, regReportSnapshot.source_url,
+        regReportSnapshot.record_identifier, regReportSnapshot.observed_at, regReportSnapshot.retrieved_at,
+        regReportSnapshot.content_hash, JSON.stringify(regReportSnapshot.raw_json)
+      );
+      insertFact.run(
+        `fact_${organisationId}_regulatory_reports_checked`,
+        organisationId,
+        'regulatory_reports_checked',
+        String(regulatoryReports.length),
+        regReportSnapshotId,
+        1
+      );
+      regulatoryReports.forEach((report, i) => {
+        insertFact.run(
+          `fact_${organisationId}_regulatory_report_${i}`,
+          organisationId,
+          'regulatory_report',
+          JSON.stringify({
+            report_name: report.report_name,
+            date_published: report.date_published ?? null,
+            report_location: report.report_location ?? null,
+          }),
+          regReportSnapshotId,
+          1
+        );
+      });
+
       console.log(
         `  ✓ ${details.charity_name} (${regNumber}): ${whoWhatHow.length} classifications, ` +
           `${areaOfOperation.length} areas of operation, ${trustees.length} trustees, ` +
-          `${financialHistory.length} years of financial history.`
+          `${financialHistory.length} years of financial history, ` +
+          `${regulatoryReports.length} regulatory report(s).`
       );
       enriched++;
     } catch (err) {
