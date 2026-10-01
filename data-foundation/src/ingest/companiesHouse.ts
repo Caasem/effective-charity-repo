@@ -13,11 +13,11 @@
  * Muslim charities: logistics, halal food, Islamic finance, etc) so the
  * pipeline produces useful data out of the box.
  */
-import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import db from '../db';
 import { makeSnapshot } from '../provenance';
 import { canonicalOrganisation } from '../canonical';
+import { proxiedFetch as fetch } from './httpClient';
 import { PILOT_COMPANIES } from './fixtures';
 
 dotenv.config();

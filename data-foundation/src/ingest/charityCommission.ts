@@ -23,12 +23,21 @@
  * registered numbers and names) so the rest of the pipeline has real rows
  * to work with immediately.
  */
-import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import db from '../db';
 import { makeSnapshot } from '../provenance';
 import { canonicalOrganisation } from '../canonical';
 import { PILOT_CHARITIES } from './fixtures';
+import { proxiedFetch as fetch } from './httpClient';
+import {
+  getCharityDetailsV2,
+  getCharityWhoWhatHow,
+  getCharityAreaOfOperation,
+  getCharityTrusteeInformationV2,
+  getCharityFinancialHistory,
+  getCharityRegulatoryReport,
+  CharityCommissionApiError,
+} from './charityCommissionApi';
 
 dotenv.config();
 
@@ -45,6 +54,7 @@ interface NormalizedCharity {
   operates_in?: string[];
   classification?: string[];
   trustees?: string[];
+  companies_house_number?: string;
   raw?: unknown;
   source_url?: string;
   observed_at?: string;
@@ -122,6 +132,11 @@ function persist(c: NormalizedCharity) {
     VALUES (?, ?, ?, ?, ?, ?)`);
   fact.run(`fact_${organisationId}_name`, organisationId, 'registered_name', c.charity_name, snapshotId, 1);
   fact.run(`fact_${organisationId}_registration_number`, organisationId, 'charity_commission_number', c.reg_charity_number, snapshotId, 1);
+  if (c.companies_house_number) {
+    // From GetAllCharityDetailsV2.charity_co_reg_number — a confirmed regulator-reported
+    // link, not a name-similarity candidate, so it doesn't go through identity_candidates.
+    fact.run(`fact_${organisationId}_companies_house_number`, organisationId, 'companies_house_registration_number', c.companies_house_number, snapshotId, 1);
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -161,6 +176,150 @@ async function ingestFromExtract(url: string): Promise<number> {
 }
 
 /* ---------------------------------------------------------------------- */
+/* Path 2: official beta REST API — rich per-charity detail for the       */
+/* pilot registration numbers (classification, area of operation,        */
+/* trustees, financial history). This is a targeted enrichment step, not */
+/* a bulk-population source: it only ever looks up the identifiers       */
+/* already in PILOT_CHARITIES, since the API has no free bulk export.    */
+/* ---------------------------------------------------------------------- */
+
+const insertFinancialHistory = db.prepare(`
+  INSERT OR REPLACE INTO organisation_facts
+    (fact_id, organisation_id, fact_type, fact_value, source_snapshot_id, confidence)
+  VALUES (?, ?, 'financial_history_year', ?, ?, 1)
+`);
+
+const insertFact = db.prepare(`
+  INSERT OR REPLACE INTO organisation_facts
+    (fact_id, organisation_id, fact_type, fact_value, source_snapshot_id, confidence)
+  VALUES (?, ?, ?, ?, ?, ?)
+`);
+
+async function ingestPilotFromApi(): Promise<number> {
+  let enriched = 0;
+  for (const pilot of PILOT_CHARITIES) {
+    const regNumber = pilot.reg_charity_number;
+    try {
+      const [details, whoWhatHow, areaOfOperation, trustees, financialHistory, regulatoryReports] = await Promise.all([
+        getCharityDetailsV2(regNumber),
+        getCharityWhoWhatHow(regNumber).catch(() => []),
+        getCharityAreaOfOperation(regNumber).catch(() => []),
+        getCharityTrusteeInformationV2(regNumber).catch(() => []),
+        getCharityFinancialHistory(regNumber).catch(() => []),
+        getCharityRegulatoryReport(regNumber).catch(() => []),
+      ]);
+
+      persist({
+        reg_charity_number: regNumber,
+        charity_name: details.charity_name,
+        registration_status: details.reg_status === 'R' ? 'Registered' : 'Removed',
+        date_of_registration: details.date_of_registration,
+        date_of_removal: details.date_of_removal ?? undefined,
+        charity_type: details.charity_type,
+        income: details.latest_income ?? undefined,
+        spending: details.latest_expenditure ?? undefined,
+        financial_year_end: details.latest_acc_fin_year_end_date ?? undefined,
+        operates_in: areaOfOperation.map((a) => a.area_of_operation),
+        classification: whoWhatHow.map((w) => `${w.classification_type}: ${w.classification_desc}`),
+        trustees: trustees.map((t) => t.name),
+        companies_house_number: details.charity_co_reg_number ?? undefined,
+        raw: { details, whoWhatHow, areaOfOperation },
+        source_url: `https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/${regNumber}`,
+      });
+
+      const organisationId = `cc_${regNumber}`;
+      const snapshotSuffix = `api_${regNumber}`;
+      const financeSnapshot = makeSnapshot(
+        'government/regulator verified',
+        'UK Charity Commission — GetCharityFinancialHistory',
+        `https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/${regNumber}`,
+        regNumber,
+        financialHistory,
+        new Date().toISOString().slice(0, 10)
+      );
+      const financeSnapshotId = `cc_${snapshotSuffix}_finance_${financeSnapshot.content_hash.slice(0, 12)}`;
+      db.prepare(`INSERT OR REPLACE INTO source_snapshots
+        (snapshot_id, source_type, source_name, source_url, record_identifier, observed_at, retrieved_at, content_hash, raw_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        financeSnapshotId, financeSnapshot.source_type, financeSnapshot.source_name, financeSnapshot.source_url,
+        financeSnapshot.record_identifier, financeSnapshot.observed_at, financeSnapshot.retrieved_at,
+        financeSnapshot.content_hash, JSON.stringify(financeSnapshot.raw_json)
+      );
+      for (const year of financialHistory) {
+        insertFinancialHistory.run(
+          `fact_${organisationId}_finance_${year.ar_cycle_reference}`,
+          organisationId,
+          JSON.stringify({
+            ar_cycle_reference: year.ar_cycle_reference,
+            financial_period_end_date: year.financial_period_end_date,
+            income: year.income,
+            expenditure: year.expenditure,
+          }),
+          financeSnapshotId
+        );
+      }
+
+      // GetCharityRegulatoryReport — the one source in this pipeline that's the
+      // regulator's own independent scrutiny, not the charity's own filing.
+      // This endpoint's coverage looks limited to recent/current actions (it
+      // returns [] even for well-documented historical inquiries like The Cup
+      // Trust), so an empty result here is recorded as "checked, none found on
+      // this endpoint" — never treated as proof of a clean regulatory history.
+      const regReportSnapshot = makeSnapshot(
+        'government/regulator verified',
+        'UK Charity Commission — GetCharityRegulatoryReport',
+        `https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/${regNumber}`,
+        regNumber,
+        regulatoryReports,
+        new Date().toISOString().slice(0, 10)
+      );
+      const regReportSnapshotId = `cc_${snapshotSuffix}_regreport_${regReportSnapshot.content_hash.slice(0, 12)}`;
+      db.prepare(`INSERT OR REPLACE INTO source_snapshots
+        (snapshot_id, source_type, source_name, source_url, record_identifier, observed_at, retrieved_at, content_hash, raw_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        regReportSnapshotId, regReportSnapshot.source_type, regReportSnapshot.source_name, regReportSnapshot.source_url,
+        regReportSnapshot.record_identifier, regReportSnapshot.observed_at, regReportSnapshot.retrieved_at,
+        regReportSnapshot.content_hash, JSON.stringify(regReportSnapshot.raw_json)
+      );
+      insertFact.run(
+        `fact_${organisationId}_regulatory_reports_checked`,
+        organisationId,
+        'regulatory_reports_checked',
+        String(regulatoryReports.length),
+        regReportSnapshotId,
+        1
+      );
+      regulatoryReports.forEach((report, i) => {
+        insertFact.run(
+          `fact_${organisationId}_regulatory_report_${i}`,
+          organisationId,
+          'regulatory_report',
+          JSON.stringify({
+            report_name: report.report_name,
+            date_published: report.date_published ?? null,
+            report_location: report.report_location ?? null,
+          }),
+          regReportSnapshotId,
+          1
+        );
+      });
+
+      console.log(
+        `  ✓ ${details.charity_name} (${regNumber}): ${whoWhatHow.length} classifications, ` +
+          `${areaOfOperation.length} areas of operation, ${trustees.length} trustees, ` +
+          `${financialHistory.length} years of financial history, ` +
+          `${regulatoryReports.length} regulatory report(s).`
+      );
+      enriched++;
+    } catch (err) {
+      if (err instanceof CharityCommissionApiError) throw err;
+      console.error(`  ✗ Could not enrich ${pilot.charity_name} (${regNumber}) from the live API: ${(err as Error).message}`);
+    }
+  }
+  return enriched;
+}
+
+/* ---------------------------------------------------------------------- */
 /* Path 3: bundled real seed data (registration numbers verified real)    */
 /* ---------------------------------------------------------------------- */
 
@@ -182,26 +341,39 @@ function ingestSeed(): number {
 
 async function main() {
   const extractUrl = process.env.CHARITY_COMMISSION_EXTRACT_URL;
+  let bulkIngested = 0;
 
   if (extractUrl) {
     try {
-      const n = await ingestFromExtract(extractUrl);
-      console.log(`\nDone. Ingested ${n} charity records from the open-data extract.`);
-      return;
+      bulkIngested = await ingestFromExtract(extractUrl);
+      console.log(`Ingested ${bulkIngested} charity records from the open-data extract.`);
     } catch (err) {
       console.error(`  ✗ ${(err as Error).message}`);
-      console.log('  Falling back to bundled seed data...');
     }
   } else {
+    console.log('CHARITY_COMMISSION_EXTRACT_URL not set — see .env.example for how to get it.');
+  }
+
+  const apiConfigured = Boolean(process.env.CHARITY_COMMISSION_API_KEY && process.env.CHARITY_COMMISSION_API_BASE_URL);
+  let apiEnriched = 0;
+  if (apiConfigured) {
+    console.log('\nEnriching pilot charities from the live Charity Commission API...');
+    apiEnriched = await ingestPilotFromApi();
+  } else {
     console.log(
-      'CHARITY_COMMISSION_EXTRACT_URL not set — see .env.example for how to get it.\n' +
-        'Using bundled seed data (5 real, verifiable UK Muslim charities) so the ' +
-        'rest of the pipeline has real rows to work with.'
+      '\nCHARITY_COMMISSION_API_KEY / CHARITY_COMMISSION_API_BASE_URL not set — see .env.example. ' +
+        'Skipping live per-charity enrichment (classification, area of operation, trustees, financial history).'
     );
   }
 
-  const n = ingestSeed();
-  console.log(`\nDone. Ingested ${n} seed charity records into source_charity_commission.`);
+  if (bulkIngested === 0 && apiEnriched === 0) {
+    console.log('\nNo live source configured. Using bundled seed data (identifiers only) so the rest of the pipeline has real rows to work with.');
+    const n = ingestSeed();
+    console.log(`Done. Ingested ${n} seed charity records into source_charity_commission.`);
+    return;
+  }
+
+  console.log(`\nDone. ${bulkIngested} bulk record(s), ${apiEnriched} pilot record(s) enriched from the live API.`);
 }
 
 if (require.main === module) {
@@ -211,4 +383,4 @@ if (require.main === module) {
   });
 }
 
-export { ingestFromExtract, ingestSeed };
+export { ingestFromExtract, ingestSeed, ingestPilotFromApi };

@@ -1,6 +1,6 @@
-import fetch from 'node-fetch';
 import { makeSnapshot } from '../provenance';
 import { writeSnapshot } from './snapshotStore';
+import { proxiedFetch as fetch } from './httpClient';
 
 export interface RegulatorTarget {
   source_name: string;
@@ -16,13 +16,13 @@ export const PILOT_REGULATOR_TARGETS: RegulatorTarget[] = [
   },
   {
     source_name: 'UK Charity Commission',
-    source_url: 'https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1000853',
-    record_identifier: '1000853',
+    source_url: 'https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1176462',
+    record_identifier: '1176462',
   },
   {
     source_name: 'UK Charity Commission',
-    source_url: 'https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1176462',
-    record_identifier: '1176462',
+    source_url: 'https://register-of-charities.charitycommission.gov.uk/charity-search/-/charity-details/1154288',
+    record_identifier: '1154288',
   },
   {
     source_name: 'Companies House',
