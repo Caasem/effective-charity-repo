@@ -108,11 +108,20 @@
     padding-bottom: 8px;
     margin-bottom: 12px;
   }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px; }
   th { text-align: left; color: var(--text-dim); font-weight: 500; padding: 6px 8px; font-size: 11px; text-transform: uppercase; }
-  td { padding: 8px; border-top: 1px solid var(--border); vertical-align: top; }
-  td.source-cell a { color: var(--accent); text-decoration: none; font-size: 12px; }
+  th:nth-child(1) { width: 18%; }
+  th:nth-child(2) { width: 52%; }
+  th:nth-child(3) { width: 12%; }
+  th:nth-child(4) { width: 18%; }
+  td { padding: 8px; border-top: 1px solid var(--border); vertical-align: top; overflow-wrap: break-word; word-break: break-word; }
+  td.source-cell a { color: var(--accent); text-decoration: none; font-size: 12px; overflow-wrap: break-word; word-break: break-all; }
   td.source-cell .date { color: var(--text-dim); font-size: 11px; display: block; margin-top: 2px; }
+  .value-truncated { cursor: pointer; }
+  .value-truncated .full { display: none; }
+  .value-truncated.expanded .full { display: inline; }
+  .value-truncated.expanded .short { display: none; }
+  .value-truncated .toggle { color: var(--accent); font-size: 11px; margin-left: 4px; white-space: nowrap; }
   .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
   .tag {
     background: var(--panel-2);
@@ -172,6 +181,10 @@ function fmtMoney(n) {
 function fmtDate(d) {
   if (!d) return '—';
   return String(d).slice(0, 10);
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
 async function loadOverview() {
@@ -243,6 +256,14 @@ function renderDetail(data) {
           value = y.ar_cycle_reference + ': income ' + fmtMoney(y.income) + ', expenditure ' + fmtMoney(y.expenditure) +
             ' (year end ' + fmtDate(y.financial_period_end_date) + ')';
         } catch (e) { /* leave raw */ }
+      }
+      value = escapeHtml(value);
+      const LIMIT = 160;
+      if (value.length > LIMIT) {
+        value = '<span class="value-truncated" onclick="this.classList.toggle(\'expanded\')">' +
+          '<span class="short">' + value.slice(0, LIMIT) + '…<span class="toggle">show more</span></span>' +
+          '<span class="full">' + value + '<span class="toggle">show less</span></span>' +
+        '</span>';
       }
       html += '<tr>' +
         '<td>' + f.fact_type + '</td>' +
