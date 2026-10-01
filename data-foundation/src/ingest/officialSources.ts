@@ -44,6 +44,16 @@ async function collectBinarySource(target: OfficialSourceTarget): Promise<string
   if (!response.ok) throw new Error(`${target.url} returned HTTP ${response.status}`);
   const buffer = await response.buffer();
   const contentType = response.headers.get('content-type') ?? 'application/octet-stream';
+  // A 200 with an empty or non-PDF body is a real failure mode for some of
+  // these URLs (e.g. a dynamic "resource" link whose server-side auth/session
+  // has expired) — it must never be accepted as a valid snapshot just because
+  // the HTTP status looked fine.
+  if (buffer.length === 0) {
+    throw new Error(`${target.url} returned an empty body (content-type: ${contentType}) — treating as a failed fetch, not a valid document.`);
+  }
+  if (!contentType.toLowerCase().includes('pdf')) {
+    throw new Error(`${target.url} returned content-type "${contentType}", not a PDF — treating as a failed fetch, not a valid document.`);
+  }
   const contentHash = hashBuffer(buffer);
   const observedAt = new Date().toISOString();
   const directory = process.env.SOURCE_SNAPSHOT_DIR ?? './data/source-snapshots';

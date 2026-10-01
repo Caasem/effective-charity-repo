@@ -82,6 +82,33 @@ export async function extractFacts(snapshot: SourceSnapshot, snapshotId: string,
       seenLinks.add(absolute);
       add('discovered_document_link', `${linkText || '(no link text)'} -> ${absolute}`, 0.9);
     }
+
+    // Appeal/campaign pages — which named crisis or project the charity is
+    // currently fundraising for. Captured as-is (name + URL): no "raised vs.
+    // target" figure exists on these pages for the sites checked so far, and
+    // this makes no attempt to classify which appeals are "active crises" vs.
+    // general giving pages (Zakat/Sadaqah info) — that's an interpretation,
+    // not an extraction, and belongs in a later, separately labelled step.
+    const appealLinkPattern = /<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+    const seenAppeals = new Set<string>();
+    let appealMatch: RegExpExecArray | null;
+    while ((appealMatch = appealLinkPattern.exec(raw)) && seenAppeals.size < 15) {
+      const href = appealMatch[1];
+      const linkText = appealMatch[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!/\/(appeals?|campaigns?)\//i.test(href)) continue;
+      if (!linkText) continue; // skip bare icon/image links with no readable label
+      let absolute: string;
+      try {
+        absolute = new URL(href, snapshot.source_url).toString();
+      } catch {
+        continue;
+      }
+      // The bare listing page itself ("Appeals" -> /appeals) isn't a specific campaign.
+      if (/^\/?(appeals?|campaigns?)\/?$/i.test(new URL(absolute).pathname)) continue;
+      if (seenAppeals.has(absolute)) continue;
+      seenAppeals.add(absolute);
+      add('discovered_appeal_link', `${linkText} -> ${absolute}`, 0.9);
+    }
   } else if (snapshot.source_name === 'Organisation annual report' && payload.binary_file) {
     // The document itself, not a claim about it. Only what pdf-parse reads
     // back verbatim from the PDF's own text layer — no summarizing.

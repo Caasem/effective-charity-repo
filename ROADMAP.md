@@ -125,6 +125,47 @@ number exactly. Muslim Aid and Islamic Relief's exact annual report URLs
 are still needed (finding them manually was judged faster than more
 crawling here).
 
+**Progress (2026-10-01):** Three real gaps closed in one pass.
+
+1. **The regulator's own independent check.** Wired up
+   `GetCharityRegulatoryReport` (inquiry reports, statutory interventions,
+   official warnings) — the one source in this whole pipeline that isn't
+   the charity's own prepared filing. Tested against a known historical
+   case (The Cup Trust, a well-documented 2013 statutory inquiry) and it
+   returns `[]` there too, so this endpoint's coverage looks limited to
+   recent/current actions, not the Commission's full historical archive.
+   Recorded per pilot as `regulatory_reports_checked` (currently `0` for
+   all four) — explicitly never treated as proof of a clean regulatory
+   history for older cases, only "checked, none found on this endpoint."
+
+2. **Appeal/campaign pages.** Checked two real campaign pages (Human
+   Appeal's Yemen Emergency Appeal, Muslim Aid's Sudan Emergency) by hand
+   before building anything: neither publishes a "funds raised vs. target"
+   figure anywhere — not in the static HTML, not in a JS data blob, no
+   donation-platform iframe. So that angle is dropped. What's real and
+   useful: which named crises/projects each charity is *currently*
+   fundraising for, which is a sharper coordination signal than a static
+   country tag. Added `discovered_appeal_link` extraction to
+   `factExtractor.ts` (same literal-citation discipline as the document-link
+   extraction — no attempt to classify "crisis" vs. "general giving page",
+   that's interpretation, not extraction).
+
+3. **The bigger bug: none of this was visible anywhere.** `extract:facts`
+   only ever wrote `data/extracted-facts.json` — nothing loaded it into the
+   `organisation_facts`/`source_snapshots` tables the viewer and artifact
+   actually read from, so every website/PDF/appeal fact from this session
+   was invisible outside a JSON file. Fixed: `extractFacts.ts` now upserts
+   snapshots and facts straight into SQLite, and it's in `pipeline:all`.
+   Also found and fixed a real silent-failure bug while re-testing the
+   Human Appeal annual report URL: the Commission's "accounts-resource"
+   link is session/token-bound, not a stable bookmarkable URL — re-fetching
+   the exact same URL days later returned HTTP 200 with an **empty body**
+   and `content-type: text/html` instead of the PDF, and the old code
+   accepted that as a successful snapshot. `collectBinarySource` now
+   rejects an empty or non-PDF response outright rather than silently
+   writing corrupted "evidence." The original, genuinely-verified PDF
+   snapshot from 2026-09-25 is untouched and still the one in the database.
+
 ### Data collection sequence
 
 1. Establish legal identity and historical identifiers.

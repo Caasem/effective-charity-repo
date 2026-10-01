@@ -14,7 +14,7 @@
     "profiles:build": "ts-node src/profiles/buildProfiles.ts",
     "resolve:entities": "ts-node src/entity-resolution/run.ts",
     "graph:build": "ts-node src/graph/build.ts",
-    "pipeline:all": "npm run ingest:charity-commission && npm run ingest:companies-house && npm run ingest:official && npm run resolve:entities && npm run graph:build",
+    "pipeline:all": "npm run ingest:charity-commission && npm run ingest:companies-house && npm run ingest:official && npm run extract:facts && npm run resolve:entities && npm run graph:build",
     "test": "ts-node src/tests/foundation.test.ts",
     "viewer": "ts-node viewer/server.ts"
   },
